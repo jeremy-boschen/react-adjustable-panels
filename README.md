@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 [![CI](https://github.com/jeremy-boschen/react-adjustable-panels/actions/workflows/ci.yml/badge.svg)](https://github.com/jeremy-boschen/react-adjustable-panels/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jeremy-boschen/react-adjustable-panels/graph/badge.svg?token=BJK8RH5684)](https://codecov.io/gh/jeremy-boschen/react-adjustable-panels)
 
 A lightweight, zero-dependency React panel library with flexible sizing options including pixel, percentage, and
 auto-fill support.
@@ -35,6 +36,10 @@ libraries with:
 - Comprehensive documentation and examples
 - Thoughtful API design and user experience
 - Multi-browser testing and CI/CD setup
+
+## Inspiration
+
+This library was inspired by [react-resizable-panels](https://github.com/bvaughn/react-resizable-panels), an excellent panel resizing library by Brian Vaughn.
 
 ## Installation
 

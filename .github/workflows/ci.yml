@@ -78,3 +78,13 @@ jobs:
           test -f dist/index.js || exit 1
           test -f dist/style.css || exit 1
           test -f dist/index.d.ts || exit 1
+
+      - name: Run tests with coverage
+        if: matrix.node-version == '24.x'
+        run: yarn test:coverage
+
+      - name: Upload coverage reports to Codecov
+        if: matrix.node-version == '24.x'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

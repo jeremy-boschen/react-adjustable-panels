@@ -117,7 +117,7 @@ This project uses **Yarn 4** (Modern/Berry) which provides excellent Windows sup
 
 ## Pre-publish Checklist
 
-The `prepublishOnly` script automatically runs before publishing:
+The `publish:check` script automatically runs before publishing:
 - ✅ Runs all tests (`yarn test`) across all 3 browsers
 - ✅ Builds the package (`yarn build`)
 

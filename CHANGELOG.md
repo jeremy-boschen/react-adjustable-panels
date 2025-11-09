@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-11-09
+
+### Added
+- Imperative API for panel collapse state management with `collapse()` and `expand()` methods on PanelGroup
+- Directional hysteresis with 20px buffer to prevent jittery collapse/expand behavior when dragging near collapse threshold
+- Codecov integration for tracking code coverage metrics
+- ControlledCollapseDemo example showcasing the new imperative collapse API
+
+### Changed
+- Refactored panel collapse logic from controlled prop pattern to imperative API pattern for more flexible state management
+- Enhanced test suite with comprehensive coverage of the new collapse API and hysteresis behavior
+- Updated CodeViewer component to remove @vite-ignore directive
+- Added coverage thresholds (90%) to CI configuration
+- Updated PUBLISHING documentation
+
+### Improved
+- Code coverage tracking with json-summary reporter, maintaining 90%+ coverage across all browsers
+
 ## [0.1.1] - 2025-11-08
 
 ### Fixed

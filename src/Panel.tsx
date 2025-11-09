@@ -11,7 +11,6 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
       minSize,
       maxSize,
       collapsedSize,
-      collapsed,
       defaultCollapsed,
       onCollapse,
       ...props

@@ -15,8 +15,9 @@ export function CodeViewer({ demoKey, title }: CodeViewerProps) {
 
   const loadCode = async () => {
     try {
-      // Force fresh import to avoid caching issues
-      const module = await import(/* @vite-ignore */ `../generated/demoCode.ts?t=${Date.now()}`);
+      // Dynamically import the generated code module
+      // Vite will bundle this properly and resolve the base path correctly
+      const module = await import('../generated/demoCode.ts');
       const { demoCode } = module;
       const extractedCode = demoCode[demoKey];
 

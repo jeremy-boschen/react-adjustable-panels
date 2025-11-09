@@ -39,8 +39,6 @@ export interface PanelProps {
   maxSize?: PanelSize;
   /** When set, panel can collapse to this size (must be < minSize) */
   collapsedSize?: PanelSize;
-  /** Controlled collapsed state */
-  collapsed?: boolean;
   /** Initial collapsed state (uncontrolled) */
   defaultCollapsed?: boolean;
   /** Called when panel collapse state changes */
@@ -72,6 +70,14 @@ export interface PanelGroupProps {
 export interface PanelGroupHandle {
   setSizes: (sizes: PanelSize[]) => void;
   getSizes: () => PanelSize[];
+  /** Collapse a panel to its collapsedSize */
+  collapsePanel: (panelIndex: number) => void;
+  /** Expand a panel to its minSize */
+  expandPanel: (panelIndex: number) => void;
+  /** Set collapsed state of a panel */
+  setCollapsed: (panelIndex: number, collapsed: boolean) => void;
+  /** Check if a panel is currently collapsed */
+  isCollapsed: (panelIndex: number) => boolean;
 }
 
 export interface ParsedSize {

@@ -1,6 +1,6 @@
 {
   "name": "@jeremy-boschen/react-adjustable-panels",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Lightweight React adjustable panel library with pixel and percentage-based sizing",
   "type": "module",
   "packageManager": "yarn@4.11.0",
@@ -30,9 +30,9 @@
     "format": "biome format --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --coverage.provider v8 --browser chromium",
     "setup:browsers": "playwright install chromium firefox webkit",
-    "prepublishOnly": "yarn test && yarn build",
+    "publish:check": "yarn test && yarn build",
     "publish:npm": "yarn npm publish --access public"
   },
   "keywords": [

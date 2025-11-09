@@ -6,6 +6,7 @@ import BasicHorizontalDemo from './examples/BasicHorizontalDemo';
 import BasicVerticalDemo from './examples/BasicVerticalDemo';
 import CollapsiblePanelDemo from './examples/CollapsiblePanelDemo';
 import ComplexLayoutDemo from './examples/ComplexLayoutDemo';
+import ControlledCollapseDemo from './examples/ControlledCollapseDemo';
 import ImperativeAPIDemo from './examples/ImperativeAPIDemo';
 import NestedPanelsDemo from './examples/NestedPanelsDemo';
 import ResizeCallbacksDemo from './examples/ResizeCallbacksDemo';
@@ -19,6 +20,7 @@ type DemoType =
   | 'complex'
   | 'callbacks'
   | 'collapsible'
+  | 'controlled-collapse'
   | 'seamless';
 
 interface DemoConfig {
@@ -78,6 +80,13 @@ const demos: DemoConfig[] = [
     description: 'Panels that automatically collapse/expand when dragged past thresholds',
     component: CollapsiblePanelDemo,
     codeKey: 'CollapsiblePanelDemo',
+  },
+  {
+    id: 'controlled-collapse',
+    title: 'Imperative Collapse API',
+    description: 'Programmatically control panel collapse with collapsePanel/expandPanel methods',
+    component: ControlledCollapseDemo,
+    codeKey: 'ControlledCollapseDemo',
   },
   {
     id: 'seamless',

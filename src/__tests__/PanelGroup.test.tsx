@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Panel } from '../Panel';
 import { PanelGroup } from '../PanelGroup';
@@ -910,9 +910,10 @@ describe('PanelGroup Integration Tests', () => {
 
       const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
 
-      // Drag left past minSize (200px) - should collapse to 50px
+      // Drag left past midpoint (125px) - should collapse to 50px
+      // Midpoint = (50px + 200px) / 2 = 125px
       fireEvent.mouseDown(handle, { clientX: 400, clientY: 300 });
-      fireEvent.mouseMove(document, { clientX: 150, clientY: 300 });
+      fireEvent.mouseMove(document, { clientX: 100, clientY: 300 });
       fireEvent.mouseUp(document);
 
       await waitFor(() => {
@@ -944,9 +945,10 @@ describe('PanelGroup Integration Tests', () => {
 
       const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
 
-      // Drag right past minSize (200px) - should expand to minSize (200px)
+      // Drag right past midpoint (125px) - should expand to minSize (200px)
+      // Midpoint = (50px + 200px) / 2 = 125px
       fireEvent.mouseDown(handle, { clientX: 50, clientY: 300 });
-      fireEvent.mouseMove(document, { clientX: 250, clientY: 300 });
+      fireEvent.mouseMove(document, { clientX: 150, clientY: 300 });
       fireEvent.mouseUp(document);
 
       await waitFor(() => {
@@ -979,9 +981,9 @@ describe('PanelGroup Integration Tests', () => {
 
       const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
 
-      // Collapse the panel
+      // Collapse the panel by dragging past midpoint (125px)
       fireEvent.mouseDown(handle, { clientX: 400, clientY: 300 });
-      fireEvent.mouseMove(document, { clientX: 150, clientY: 300 });
+      fireEvent.mouseMove(document, { clientX: 100, clientY: 300 });
       fireEvent.mouseUp(document);
 
       await waitFor(
@@ -992,9 +994,9 @@ describe('PanelGroup Integration Tests', () => {
         { timeout: 100 }
       );
 
-      // Expand the panel
+      // Expand the panel by dragging past midpoint (125px) in the other direction
       fireEvent.mouseDown(handle, { clientX: 50, clientY: 300 });
-      fireEvent.mouseMove(document, { clientX: 250, clientY: 300 });
+      fireEvent.mouseMove(document, { clientX: 150, clientY: 300 });
       fireEvent.mouseUp(document);
 
       await waitFor(
@@ -1063,9 +1065,9 @@ describe('PanelGroup Integration Tests', () => {
 
       const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
 
-      // Collapse
+      // Collapse by dragging past midpoint (125px)
       fireEvent.mouseDown(handle, { clientX: 400, clientY: 300 });
-      fireEvent.mouseMove(document, { clientX: 150, clientY: 300 });
+      fireEvent.mouseMove(document, { clientX: 100, clientY: 300 });
       fireEvent.mouseUp(document);
 
       await waitFor(() => {
@@ -1348,52 +1350,181 @@ describe('PanelGroup Integration Tests', () => {
     });
   });
 
-  describe('Controlled Collapse', () => {
-    it('respects controlled collapsed prop', async () => {
-      // Test controlled collapse using a static collapsed value
-      render(
-        <div style={{ width: '1000px', height: '600px' }}>
-          <PanelGroup direction="horizontal">
-            <Panel defaultSize="400px" minSize="200px" collapsedSize="50px" collapsed={true} onCollapse={vi.fn()}>
-              <div data-testid="panel-1">Panel 1</div>
-            </Panel>
-            <Panel defaultSize="600px">
-              <div data-testid="panel-2">Panel 2</div>
-            </Panel>
-          </PanelGroup>
-        </div>
-      );
+  describe('Imperative Collapse API', () => {
+    it('collapsePanel() collapses a panel to collapsedSize', async () => {
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
 
-      // Wait for PanelGroup to initialize and apply collapsed size
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.collapsePanel(0)} data-testid="collapse-btn">
+              Collapse
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px">
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      // Wait for initial render
       await waitFor(() => {
         const panel1 = screen.getByTestId('panel-1').parentElement;
         const width1 = parseFloat(panel1?.style.width || '0');
-        // Wait until collapsed size is applied (50px)
-        expect(width1).toBeCloseTo(50, 0);
+        expect(width1).toBeCloseTo(400, 0);
       });
 
-      const panel1 = screen.getByTestId('panel-1').parentElement;
-      const width1 = parseFloat(panel1?.style.width || '0');
+      // Collapse the panel
+      const collapseBtn = screen.getByTestId('collapse-btn');
+      fireEvent.click(collapseBtn);
 
-      // Panel should be collapsed to 50px (controlled by collapsed prop)
-      expect(width1).toBeCloseTo(50, 0);
+      // Panel should collapse to 50px
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeCloseTo(50, 0);
+      });
     });
 
-    it('maintains controlled collapsed state during drag', async () => {
+    it('expandPanel() expands a panel to minSize', async () => {
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.expandPanel(0)} data-testid="expand-btn">
+              Expand
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px" defaultCollapsed={true}>
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      // Wait for initial collapsed state
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeCloseTo(50, 0);
+      });
+
+      // Expand the panel
+      const expandBtn = screen.getByTestId('expand-btn');
+      fireEvent.click(expandBtn);
+
+      // Panel should expand to minSize (200px)
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeCloseTo(200, 0);
+      });
+    });
+
+    it('imperative API fires onCollapse callback', async () => {
       const onCollapse = vi.fn();
 
-      const { container } = render(
-        <div style={{ width: '1000px', height: '600px' }}>
-          <PanelGroup direction="horizontal">
-            <Panel defaultSize="400px" minSize="200px" collapsedSize="50px" collapsed={true} onCollapse={onCollapse}>
-              <div data-testid="panel-1">Panel 1</div>
-            </Panel>
-            <Panel defaultSize="600px">
-              <div data-testid="panel-2">Panel 2</div>
-            </Panel>
-          </PanelGroup>
-        </div>
-      );
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.collapsePanel(0)} data-testid="collapse-btn">
+              Collapse
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px" onCollapse={onCollapse}>
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1).toBeTruthy();
+      });
+
+      // Collapse the panel
+      const collapseBtn = screen.getByTestId('collapse-btn');
+      fireEvent.click(collapseBtn);
+
+      // onCollapse should be called with true
+      await waitFor(() => {
+        expect(onCollapse).toHaveBeenCalledWith(true);
+      });
+    });
+
+    it('isCollapsed() returns correct state', async () => {
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+        const [isCollapsed, setIsCollapsed] = useState(false);
+
+        const checkState = () => {
+          const collapsed = groupRef.current?.isCollapsed(0);
+          setIsCollapsed(collapsed ?? false);
+        };
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.collapsePanel(0)} data-testid="collapse-btn">
+              Collapse
+            </button>
+            <button onClick={checkState} data-testid="check-btn">
+              Check
+            </button>
+            <div data-testid="state">{String(isCollapsed)}</div>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px">
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1).toBeTruthy();
+      });
+
+      // Check initial state (not collapsed)
+      const checkBtn = screen.getByTestId('check-btn');
+      fireEvent.click(checkBtn);
+
+      await waitFor(() => {
+        const state = screen.getByTestId('state');
+        expect(state.textContent).toBe('false');
+      });
+
+      // Collapse the panel
+      const collapseBtn = screen.getByTestId('collapse-btn');
+      fireEvent.click(collapseBtn);
 
       await waitFor(() => {
         const panel1 = screen.getByTestId('panel-1').parentElement;
@@ -1401,18 +1532,408 @@ describe('PanelGroup Integration Tests', () => {
         expect(width1).toBeCloseTo(50, 0);
       });
 
-      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+      // Check state after collapse
+      fireEvent.click(checkBtn);
 
-      // Try to drag the controlled collapsed panel
-      fireEvent.mouseDown(handle, { clientX: 50 });
-      fireEvent.mouseMove(document, { clientX: 300 });
-      fireEvent.mouseUp(document);
+      await waitFor(() => {
+        const state = screen.getByTestId('state');
+        expect(state.textContent).toBe('true');
+      });
+    });
+
+    it('collapsePanel warns when panel has no collapsedSize', async () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.collapsePanel(0)} data-testid="collapse-btn">
+              Collapse
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px">
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1).toBeTruthy();
+      });
+
+      const collapseBtn = screen.getByTestId('collapse-btn');
+      fireEvent.click(collapseBtn);
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('does not have a collapsedSize'));
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it('expandPanel warns when panel has no minSize', async () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.expandPanel(0)} data-testid="expand-btn">
+              Expand
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="50px" collapsedSize="50px" defaultCollapsed={true}>
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="950px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1).toBeTruthy();
+      });
+
+      const expandBtn = screen.getByTestId('expand-btn');
+      fireEvent.click(expandBtn);
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('does not have a minSize'));
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it('collapsePanel does nothing when already collapsed', async () => {
+      const onCollapse = vi.fn();
+
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.collapsePanel(0)} data-testid="collapse-btn">
+              Collapse
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel
+                defaultSize="50px"
+                minSize="200px"
+                collapsedSize="50px"
+                defaultCollapsed={true}
+                onCollapse={onCollapse}
+              >
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="950px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      // Wait for initial collapsed callback
+      await waitFor(() => {
+        expect(onCollapse).toHaveBeenCalledWith(true);
+      });
+
+      onCollapse.mockClear();
+
+      // Try to collapse again
+      const collapseBtn = screen.getByTestId('collapse-btn');
+      fireEvent.click(collapseBtn);
+
+      // Should not fire callback again
+      await new Promise(resolve => setTimeout(resolve, 50));
+      expect(onCollapse).not.toHaveBeenCalled();
+    });
+
+    it('expandPanel does nothing when already expanded', async () => {
+      const onCollapse = vi.fn();
+
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.expandPanel(0)} data-testid="expand-btn">
+              Expand
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px" onCollapse={onCollapse}>
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1).toBeTruthy();
+      });
+
+      // Try to expand when already expanded
+      const expandBtn = screen.getByTestId('expand-btn');
+      fireEvent.click(expandBtn);
+
+      // Should not fire callback
+      await new Promise(resolve => setTimeout(resolve, 50));
+      expect(onCollapse).not.toHaveBeenCalled();
+    });
+
+    it('collapsePanel redistributes size to auto panels', async () => {
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.collapsePanel(0)} data-testid="collapse-btn">
+              Collapse
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px">
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="auto">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
 
       await waitFor(() => {
         const panel1 = screen.getByTestId('panel-1').parentElement;
         const width1 = parseFloat(panel1?.style.width || '0');
-        // Should remain collapsed because it's controlled
+        expect(width1).toBeCloseTo(400, 0);
+      });
+
+      // Collapse the panel
+      const collapseBtn = screen.getByTestId('collapse-btn');
+      fireEvent.click(collapseBtn);
+
+      // Panel 1 should collapse to 50px, Panel 2 should auto-fill to 950px
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
         expect(width1).toBeCloseTo(50, 0);
+        expect(width2).toBeCloseTo(950, 0);
+      });
+    });
+
+    it('expandPanel redistributes size from auto panels', async () => {
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.expandPanel(0)} data-testid="expand-btn">
+              Expand
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="50px" minSize="200px" collapsedSize="50px" defaultCollapsed={true}>
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="auto">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeCloseTo(50, 0);
+      });
+
+      // Expand the panel
+      const expandBtn = screen.getByTestId('expand-btn');
+      fireEvent.click(expandBtn);
+
+      // Panel 1 should expand to 200px, Panel 2 should auto-fill to 800px
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+        expect(width1).toBeCloseTo(200, 0);
+        expect(width2).toBeCloseTo(800, 0);
+      });
+    });
+
+    it('setSizes triggers collapse when size is below minSize', async () => {
+      const onCollapse = vi.fn();
+
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.setSizes(['100px', '900px'])} data-testid="set-sizes-btn">
+              Set Sizes
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px" onCollapse={onCollapse}>
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1).toBeTruthy();
+      });
+
+      // Set size below minSize (200px) - should trigger collapse
+      const setSizesBtn = screen.getByTestId('set-sizes-btn');
+      fireEvent.click(setSizesBtn);
+
+      await waitFor(() => {
+        expect(onCollapse).toHaveBeenCalledWith(true);
+      });
+    });
+
+    it('setSizes triggers expand when collapsed and size is above minSize', async () => {
+      const onCollapse = vi.fn();
+
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.setSizes(['300px', '700px'])} data-testid="set-sizes-btn">
+              Set Sizes
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel
+                defaultSize="50px"
+                minSize="200px"
+                collapsedSize="50px"
+                defaultCollapsed={true}
+                onCollapse={onCollapse}
+              >
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="950px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      // Wait for initial collapse callback
+      await waitFor(() => {
+        expect(onCollapse).toHaveBeenCalledWith(true);
+      });
+
+      onCollapse.mockClear();
+
+      // Set size above minSize (200px) - should trigger expand
+      const setSizesBtn = screen.getByTestId('set-sizes-btn');
+      fireEvent.click(setSizesBtn);
+
+      await waitFor(() => {
+        expect(onCollapse).toHaveBeenCalledWith(false);
+      });
+    });
+
+    it('setCollapsed() works as convenience method', async () => {
+      const onCollapse = vi.fn();
+
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.setCollapsed(0, true)} data-testid="set-collapsed-btn">
+              Set Collapsed
+            </button>
+            <button onClick={() => groupRef.current?.setCollapsed(0, false)} data-testid="set-expanded-btn">
+              Set Expanded
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px" onCollapse={onCollapse}>
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1).toBeTruthy();
+      });
+
+      // Test setCollapsed(true)
+      const setCollapsedBtn = screen.getByTestId('set-collapsed-btn');
+      fireEvent.click(setCollapsedBtn);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeCloseTo(50, 0);
+        expect(onCollapse).toHaveBeenCalledWith(true);
+      });
+
+      // Test setCollapsed(false)
+      const setExpandedBtn = screen.getByTestId('set-expanded-btn');
+      fireEvent.click(setExpandedBtn);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeCloseTo(200, 0);
+        expect(onCollapse).toHaveBeenCalledWith(false);
       });
     });
   });
@@ -1609,6 +2130,56 @@ describe('PanelGroup Integration Tests', () => {
         // Should parse size property to pixels (200px and 800px)
         expect(width1).toBeCloseTo(200, 0);
         expect(width2).toBeCloseTo(800, 0);
+      });
+    });
+
+    it('onResizeEnd detects when callback mutates currentSizes array', async () => {
+      const onResizeEnd = vi.fn((info: ResizeInfo): PanelSizeInfo[] | undefined => {
+        // Mutate currentSizes to force panel 1 to 350px
+        info.currentSizes[0].pixels = 350;
+        info.currentSizes[1].pixels = 650;
+        // Return undefined to signal mutation
+        return undefined;
+      });
+
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal" onResizeEnd={onResizeEnd}>
+            <Panel defaultSize="50%">
+              <div data-testid="panel-1">Panel 1</div>
+            </Panel>
+            <Panel defaultSize="50%">
+              <div data-testid="panel-2">Panel 2</div>
+            </Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeGreaterThan(400);
+        expect(width1).toBeLessThan(600);
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+
+      fireEvent.mouseDown(handle, { clientX: 500 });
+      fireEvent.mouseMove(document, { clientX: 400 });
+      fireEvent.mouseUp(document);
+
+      await waitFor(() => {
+        expect(onResizeEnd).toHaveBeenCalled();
+
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+
+        // Should detect mutation and use mutated values (350px and 650px)
+        expect(width1).toBeCloseTo(350, 0);
+        expect(width2).toBeCloseTo(650, 0);
       });
     });
   });

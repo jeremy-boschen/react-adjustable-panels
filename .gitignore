@@ -42,3 +42,7 @@ demo/src/generated/
 
 # Profiling data
 .profile/
+
+# AI tooling
+.claude
+.clinerules-*
