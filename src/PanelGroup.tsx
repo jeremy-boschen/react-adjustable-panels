@@ -1,20 +1,21 @@
 import {
-  Children,
   type CSSProperties,
   cloneElement,
   forwardRef,
-  isValidElement,
   type ReactElement,
   type ReactNode,
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from 'react';
+import { Panel } from './Panel';
 import { ResizeHandle, type ResizeHandleProps } from './ResizeHandle';
 import type { PanelGroupHandle, PanelGroupProps, PanelProps, PanelSize, PanelSizeInfo, ResizeInfo } from './types';
 import { calculateSizes, clampSize, convertFromPixels, convertToPixels, formatSize, parseSize } from './utils';
+import { findPanelChildren, flattenPanelChildren } from './childUtils';
 
 export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>(
   ({ children, direction = 'horizontal', className, style, onResize, onResizeStart, onResizeEnd }, ref) => {
@@ -37,9 +38,8 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>(
     // Initialize panel sizes and constraints
     useEffect(() => {
       // Extract panel children inside useEffect to avoid dependency issues
-      const panelChildren = Children.toArray(children).filter(
-        (child): child is ReactElement<PanelProps> => isValidElement(child) && child.type !== ResizeHandle
-      );
+      // Use recursive discovery to support wrapped Panels
+      const panelChildren = findPanelChildren<PanelProps>(children, Panel, ResizeHandle);
 
       const panelCount = panelChildren.length;
       if (panelCount === 0) return;
@@ -256,9 +256,8 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>(
 
       return {
         setSizes: (sizes: PanelSize[]) => {
-          const panelChildren = Children.toArray(children).filter(
-            (child): child is ReactElement<PanelProps> => isValidElement(child) && child.type !== ResizeHandle
-          );
+          // Use recursive discovery to support wrapped Panels
+          const panelChildren = findPanelChildren<PanelProps>(children, Panel, ResizeHandle);
           const panelCount = panelChildren.length;
 
           if (sizes.length !== panelCount) {
@@ -660,20 +659,21 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>(
     const flexDirection = direction === 'horizontal' ? 'row' : 'column';
 
     // Process children to separate panels and handles
+    // Use recursive flattening to support wrapped Panels and ResizeHandles
+    // Memoize to avoid re-traversal on every render
+    const childArray = useMemo(
+      () => flattenPanelChildren(children, Panel, ResizeHandle),
+      [children]
+    );
+
     const processedChildren: ReactNode[] = [];
-    const childArray = Children.toArray(children);
     let panelIndex = 0;
 
     // Count total panels (not including ResizeHandles) for isLastPanel check
-    const panelCount = childArray.filter(child => isValidElement(child) && child.type !== ResizeHandle).length;
+    const panelCount = childArray.filter(child => child.type === Panel).length;
 
     for (let i = 0; i < childArray.length; i++) {
       const child = childArray[i];
-
-      if (!isValidElement(child)) {
-        processedChildren.push(child);
-        continue;
-      }
 
       // Check if this is a ResizeHandle component
       const isHandle = child.type === ResizeHandle;
@@ -711,7 +711,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>(
 
         // Check if we need to insert a default ResizeHandle
         const nextChild = childArray[i + 1];
-        const nextIsHandle = isValidElement(nextChild) && nextChild.type === ResizeHandle;
+        const nextIsHandle = nextChild && nextChild.type === ResizeHandle;
         const isLastPanel = panelIndex === panelCount - 1;
 
         if (!isLastPanel && !nextIsHandle) {

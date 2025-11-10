@@ -2205,4 +2205,381 @@ describe('PanelGroup Integration Tests', () => {
       });
     });
   });
+
+  describe('Wrapped Panel Children', () => {
+    it('supports Panels wrapped in div elements', async () => {
+      render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            <div>
+              <Panel defaultSize="30%">
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+            </div>
+            <div>
+              <Panel defaultSize="70%">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </div>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+
+        // Check that panels have sizes applied
+        expect(panel1?.style.width).toBeTruthy();
+        expect(panel2?.style.width).toBeTruthy();
+
+        // Check approximate sizes (30% of 1000px = 300px, 70% = 700px)
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+        expect(width1).toBeCloseTo(300, 0);
+        expect(width2).toBeCloseTo(700, 0);
+      });
+    });
+
+    it('supports Panels wrapped in React fragments', async () => {
+      render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            <>
+              <Panel defaultSize="40%">
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+            </>
+            <>
+              <Panel defaultSize="60%">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+
+        expect(panel1?.style.width).toBeTruthy();
+        expect(panel2?.style.width).toBeTruthy();
+
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+        expect(width1).toBeCloseTo(400, 0);
+        expect(width2).toBeCloseTo(600, 0);
+      });
+    });
+
+    it('supports ResizeHandles wrapped in div elements', async () => {
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            <Panel defaultSize="50%">
+              <div data-testid="panel-1">Panel 1</div>
+            </Panel>
+            <div>
+              <ResizeHandle />
+            </div>
+            <Panel defaultSize="50%">
+              <div data-testid="panel-2">Panel 2</div>
+            </Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handles = container.querySelectorAll('[data-resize-handle="true"]');
+        expect(handles.length).toBe(1);
+
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+        expect(width1).toBeCloseTo(500, 0);
+        expect(width2).toBeCloseTo(500, 0);
+      });
+    });
+
+    it('supports conditionally rendered Panels', async () => {
+      const showPanel = true;
+
+      render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            {showPanel && (
+              <Panel defaultSize="25%">
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+            )}
+            <Panel defaultSize="75%">
+              <div data-testid="panel-2">Panel 2</div>
+            </Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+        expect(width1).toBeCloseTo(250, 0);
+        expect(width2).toBeCloseTo(750, 0);
+      });
+    });
+
+    it('supports deeply nested wrapper structures', async () => {
+      render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            <div className="wrapper">
+              <div className="inner-wrapper">
+                <Panel defaultSize="30%">
+                  <div data-testid="panel-1">Panel 1</div>
+                </Panel>
+              </div>
+            </div>
+            <div className="wrapper">
+              <div className="inner-wrapper">
+                <Panel defaultSize="70%">
+                  <div data-testid="panel-2">Panel 2</div>
+                </Panel>
+              </div>
+            </div>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+        expect(width1).toBeCloseTo(300, 0);
+        expect(width2).toBeCloseTo(700, 0);
+      });
+    });
+
+    it('supports mixed wrapped and unwrapped Panels', async () => {
+      render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            <Panel defaultSize="25%">
+              <div data-testid="panel-1">Panel 1</div>
+            </Panel>
+            <div>
+              <Panel defaultSize="50%">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </div>
+            <Panel defaultSize="25%">
+              <div data-testid="panel-3">Panel 3</div>
+            </Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+        const panel3 = screen.getByTestId('panel-3').parentElement;
+
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+        const width3 = parseFloat(panel3?.style.width || '0');
+        expect(width1).toBeCloseTo(250, 0);
+        expect(width2).toBeCloseTo(500, 0);
+        expect(width3).toBeCloseTo(250, 0);
+      });
+    });
+
+    it('supports resizing wrapped Panels via drag', async () => {
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            <div>
+              <Panel defaultSize="50%">
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+            </div>
+            <div>
+              <Panel defaultSize="50%">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </div>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1?.style.width).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+      expect(handle).toBeTruthy();
+
+      // Drag handle 100px to the right
+      fireEvent.mouseDown(handle, { clientX: 500 });
+      fireEvent.mouseMove(document, { clientX: 600 });
+      fireEvent.mouseUp(document);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+
+        // Panel 1 should be larger, Panel 2 smaller
+        expect(width1).toBeGreaterThan(500);
+        expect(width2).toBeLessThan(500);
+        expect(width1 + width2).toBeCloseTo(1000, 0);
+      });
+    });
+
+    it('supports imperative API with wrapped Panels', async () => {
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button
+              onClick={() => groupRef.current?.setSizes(['300px' as PanelSize, '700px' as PanelSize])}
+              data-testid="set-sizes-btn"
+            >
+              Set Sizes
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <div>
+                <Panel defaultSize="50%">
+                  <div data-testid="panel-1">Panel 1</div>
+                </Panel>
+              </div>
+              <div>
+                <Panel defaultSize="50%">
+                  <div data-testid="panel-2">Panel 2</div>
+                </Panel>
+              </div>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeCloseTo(500, 0);
+      });
+
+      const button = screen.getByTestId('set-sizes-btn');
+      fireEvent.click(button);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const panel2 = screen.getByTestId('panel-2').parentElement;
+
+        const width1 = parseFloat(panel1?.style.width || '0');
+        const width2 = parseFloat(panel2?.style.width || '0');
+        expect(width1).toBeCloseTo(300, 0);
+        expect(width2).toBeCloseTo(700, 0);
+      });
+    });
+
+    it('correctly counts panels when wrapped in various structures', async () => {
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            <div>
+              <Panel defaultSize="25%">Panel 1</Panel>
+            </div>
+            <>
+              <Panel defaultSize="25%">Panel 2</Panel>
+            </>
+            <Panel defaultSize="25%">Panel 3</Panel>
+            <div>
+              <div>
+                <Panel defaultSize="25%">Panel 4</Panel>
+              </div>
+            </div>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handles = container.querySelectorAll('[data-resize-handle="true"]');
+        // Should have 3 handles for 4 panels
+        expect(handles.length).toBe(3);
+      });
+    });
+
+    it('supports collapse functionality with wrapped Panels', async () => {
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button
+              onClick={() => groupRef.current?.collapsePanel(0)}
+              data-testid="collapse-btn"
+            >
+              Collapse
+            </button>
+            <button
+              onClick={() => groupRef.current?.expandPanel(0)}
+              data-testid="expand-btn"
+            >
+              Expand
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <div>
+                <Panel defaultSize="50%" minSize="100px" collapsedSize="20px">
+                  <div data-testid="panel-1">Panel 1</div>
+                </Panel>
+              </div>
+              <div>
+                <Panel defaultSize="50%">
+                  <div data-testid="panel-2">Panel 2</div>
+                </Panel>
+              </div>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeCloseTo(500, 0);
+      });
+
+      const collapseBtn = screen.getByTestId('collapse-btn');
+      fireEvent.click(collapseBtn);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeCloseTo(20, 0);
+      });
+
+      const expandBtn = screen.getByTestId('expand-btn');
+      fireEvent.click(expandBtn);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        expect(width1).toBeGreaterThanOrEqual(100);
+      });
+    });
+  });
 });
