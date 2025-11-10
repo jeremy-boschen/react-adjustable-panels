@@ -42,6 +42,19 @@ describe('utils', () => {
     it('throws on invalid format', () => {
       expect(() => parseSize('invalid' as PanelSize)).toThrow();
     });
+
+    it('provides detailed error message for invalid format', () => {
+      expect(() => parseSize('invalid' as PanelSize)).toThrow(
+        /Invalid size format: invalid \(type: string\)/
+      );
+    });
+
+    it('provides helpful error message for NaNundefined case', () => {
+      // This simulates the error that would occur if formatSize returned "NaNundefined"
+      expect(() => parseSize('NaNundefined' as PanelSize)).toThrow(
+        /If you're seeing "NaNundefined", this may indicate an internal state synchronization issue/
+      );
+    });
   });
 
   describe('formatSize', () => {
@@ -55,6 +68,20 @@ describe('utils', () => {
 
     it('formats auto size correctly', () => {
       expect(formatSize(0, 'auto')).toBe('auto');
+    });
+
+    it('handles undefined unit gracefully', () => {
+      // @ts-expect-error - testing defensive behavior for invalid input
+      expect(formatSize(100, undefined)).toBe('auto');
+    });
+
+    it('handles NaN value gracefully', () => {
+      expect(formatSize(NaN, 'px')).toBe('auto');
+    });
+
+    it('handles invalid unit string gracefully', () => {
+      // @ts-expect-error - testing defensive behavior for invalid input
+      expect(formatSize(100, 'undefined')).toBe('auto');
     });
   });
 
