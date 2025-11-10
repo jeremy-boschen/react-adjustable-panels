@@ -115,7 +115,8 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
     originalUnitsRef.current = newUnits;
 
     // Initialize sizes if not yet initialized OR if state was cleared (e.g., by Strict Mode remount)
-    if (!isInitializedRef.current || panelSizes.length === 0) {
+    // OR if panel count changed (panels added/removed dynamically)
+    if (!isInitializedRef.current || panelSizes.length === 0 || panelSizes.length !== newSizes.length) {
       setPanelSizes(newSizes);
       isInitializedRef.current = true;
     }
