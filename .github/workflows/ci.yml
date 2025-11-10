@@ -64,11 +64,11 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Run tests
-        run: yarn test
-
       - name: Run type check
         run: yarn typecheck
+
+      - name: Run tests
+        run: yarn test
 
       - name: Build
         run: yarn build
@@ -78,6 +78,20 @@ jobs:
           test -f dist/index.js || exit 1
           test -f dist/style.css || exit 1
           test -f dist/index.d.ts || exit 1
+
+      - name: Run performance tests and bundle check (Node 24.x only)
+        if: matrix.node-version == '24.x'
+        run: |
+          yarn test:perf
+          yarn bundle:check
+
+      - name: Upload bundle size report
+        if: matrix.node-version == '24.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-size-report
+          path: dist/bundle-size.json
+          retention-days: 30
 
       - name: Run tests with coverage
         if: matrix.node-version == '24.x'

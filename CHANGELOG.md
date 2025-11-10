@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for wrapping `Panel` and `ResizeHandle` components in arbitrary React elements (divs, fragments, conditional renders, etc.)
+- Recursive child discovery using `childUtils.ts` to find panels and handles at any nesting depth
+- Comprehensive performance monitoring infrastructure:
+  - Performance regression tests to catch slowdowns automatically
+  - React Profiler tests to measure actual render times
+  - Vitest benchmarks for operations-per-second comparisons
+  - Bundle size monitoring with 25KB/8KB (raw/gzip) budgets
+- Performance documentation (`PERFORMANCE.md`) with optimization guidance
+- Integrated performance tests and bundle size checks into CI workflow
+
+### Changed
+- `PanelGroup` now uses `useMemo` to optimize recursive traversal in render path
+- Performance tests run in jsdom (separate from browser tests) for consistent timing measurements
+- Test suite excludes performance tests from main run to avoid duplication
+
+### Performance
+- Wrapped components have ~5% overhead vs direct children (well within acceptable range)
+- Memoization prevents re-traversal on every render
+- All performance metrics maintained within budgets (< 50ms mount, < 16ms resize, < 2x overhead)
+
 ## [0.2.0] - 2025-11-09
 
 ### Added
