@@ -1,8 +1,10 @@
 /* Default styles for resize handles - seamless overlay with no gap */
 [data-resize-handle="true"] {
+  --resize-handle-hover-color: rgba(0, 102, 204, 0.4);
+  --resize-handle-active-color: rgba(0, 102, 204, 0.8);
   flex-shrink: 0;
   position: relative;
-  z-index: 10; /* Above panels */
+  z-index: 50; /* Above panels */
   background: transparent;
 }
 
@@ -48,23 +50,23 @@
 /* Hover state */
 [data-resize-handle="true"][data-direction="horizontal"]:hover::before {
   width: 2px;
-  background: rgba(0, 102, 204, 0.4);
+  background: var(--resize-handle-hover-color);
 }
 
 [data-resize-handle="true"][data-direction="vertical"]:hover::before {
   height: 2px;
-  background: rgba(0, 102, 204, 0.4);
+  background: var(--resize-handle-hover-color);
 }
 
 /* Active state */
 [data-resize-handle="true"][data-direction="horizontal"]:active::before {
   width: 3px;
-  background: rgba(0, 102, 204, 0.8);
+  background: var(--resize-handle-active-color);
 }
 
 [data-resize-handle="true"][data-direction="vertical"]:active::before {
   height: 3px;
-  background: rgba(0, 102, 204, 0.8);
+  background: var(--resize-handle-active-color);
 }
 
 [data-panel-group] {
