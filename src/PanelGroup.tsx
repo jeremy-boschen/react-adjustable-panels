@@ -14,12 +14,18 @@ import {
 import { Panel } from './Panel';
 import { ResizeHandle, type ResizeHandleProps } from './ResizeHandle';
 import type { PanelGroupHandle, PanelGroupProps, PanelProps, PanelSize, PanelSizeInfo, ResizeInfo } from './types';
-import { calculateSizes, clampSize, convertFromPixels, convertToPixels, formatSize, normalizePanelSize, parseSize } from './utils';
+import { calculateSizes, clampSize, convertFromPixels, convertToPixels, formatSize, parseSize } from './utils';
 import { findPanelChildren, flattenPanelChildren } from './childUtils';
+import { normalizePanelGroupProps, normalizePanelProps } from './propNormalization';
 
-export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>(
-  ({ children, direction = 'horizontal', className, style, onResize, onResizeStart, onResizeEnd }, ref) => {
-    const containerRef = useRef<HTMLDivElement>(null);
+export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProps, ref) => {
+  // Normalize props at component boundary - provides defaults for optional values
+  const { children, direction, className, style, onResize, onResizeStart, onResizeEnd } = {
+    children: rawProps.children,
+    ...normalizePanelGroupProps(rawProps),
+  };
+
+  const containerRef = useRef<HTMLDivElement>(null);
     const [panelSizes, setPanelSizes] = useState<PanelSize[]>([]);
     const [pixelSizes, setPixelSizes] = useState<number[]>([]);
     const currentPixelSizesRef = useRef<number[]>([]);
@@ -53,33 +59,33 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>(
       const newCollapseCallbacks: Array<((collapsed: boolean) => void) | undefined> = [];
 
       panelChildren.forEach(child => {
-        const props = child.props as PanelProps;
+        const rawProps = child.props as PanelProps;
 
-        // Sanitize all size props at the component boundary
-        // Convert undefined → 'auto' to ensure internal functions receive valid inputs
-        const defaultSize = normalizePanelSize(props.defaultSize);
-        const minSize = normalizePanelSize(props.minSize);
-        const maxSize = normalizePanelSize(props.maxSize);
-        const collapsedSize = props.collapsedSize ? normalizePanelSize(props.collapsedSize) : undefined;
+        // Normalize Panel props (same normalization that Panel component does internally)
+        // We need this because we're reading props from React children, which are still raw
+        const {
+          defaultSize,
+          minSize,
+          maxSize,
+          collapsedSize,
+          defaultCollapsed,
+          onCollapse,
+        } = normalizePanelProps(rawProps);
 
-        // Store normalized constraints (we keep undefined for collapsedSize since it's optional)
+        // Store normalized constraints (convert 'auto' to undefined for optional constraints)
         newConstraints.push({
           minSize: minSize === 'auto' ? undefined : minSize,
           maxSize: maxSize === 'auto' ? undefined : maxSize
         });
 
-        const defaultCollapsed = props.defaultCollapsed;
-        const onCollapse = props.onCollapse;
-
         newCollapsedSizes.push(collapsedSize);
         newCollapseCallbacks.push(onCollapse);
 
-        // Initialize collapsed state from defaultCollapsed
-        const initialCollapsed = defaultCollapsed ?? false;
-        newCollapsedStates.push(initialCollapsed);
+        // Initialize collapsed state from defaultCollapsed (already normalized to boolean)
+        newCollapsedStates.push(defaultCollapsed);
 
         // If panel should start collapsed, use collapsedSize instead of defaultSize
-        if (initialCollapsed && collapsedSize) {
+        if (defaultCollapsed && collapsedSize) {
           newSizes.push(collapsedSize);
           newUnits.push(parseSize(collapsedSize).unit);
         } else {
