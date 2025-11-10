@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2025-11-10
+
 ### Fixed
 - Fixed invalid size format error (`"NaNundefined"`) when dynamically adding panels and then resizing them
 - Fixed initial style calculation for dynamically added panels (panels no longer start with `height: "0px"` or `width: "0px"`)
