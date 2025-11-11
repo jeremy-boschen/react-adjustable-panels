@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added constraint caching to avoid redundant size parsing and conversion on every resize (30-40% faster calculations)
 - Added early exit optimization to collapse logic for panels without collapse support (30x faster for non-collapsible layouts)
 
+### Tests
+- Added comprehensive tests for `throttle` function with proper fake timer support using `vi.setSystemTime()`
+- Added dev mode warning tests for `calculateSizesWithPixelConstraints` to cover edge cases
+- Added complete test coverage for `propNormalization.ts` functions
+- Improved overall branch coverage to meet 90% threshold across all source files
+
 ## [0.2.3] - 2025-11-10
 
 ### Fixed
