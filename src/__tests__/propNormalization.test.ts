@@ -26,9 +26,9 @@ describe('propNormalization', () => {
     });
 
     it('preserves all optional props', () => {
-      const onResize = () => {};
-      const onResizeStart = () => {};
-      const onResizeEnd = () => {};
+      const onResize = (_info: any) => undefined;
+      const onResizeStart = (_info: any) => {};
+      const onResizeEnd = (_info: any) => undefined;
 
       const props: PanelGroupProps = {
         children: null,

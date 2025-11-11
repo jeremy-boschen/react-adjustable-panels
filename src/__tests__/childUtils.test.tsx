@@ -199,13 +199,13 @@ describe('childUtils', () => {
 
       expect(flattened).toHaveLength(5);
       expect(flattened[0].type).toBe(Panel);
-      expect(flattened[0].props.defaultSize).toBe('100px');
+      expect((flattened[0].props as any).defaultSize).toBe('100px');
       expect(flattened[1].type).toBe(ResizeHandle);
       expect(flattened[2].type).toBe(Panel);
-      expect(flattened[2].props.defaultSize).toBe('200px');
+      expect((flattened[2].props as any).defaultSize).toBe('200px');
       expect(flattened[3].type).toBe(ResizeHandle);
       expect(flattened[4].type).toBe(Panel);
-      expect(flattened[4].props.defaultSize).toBe('300px');
+      expect((flattened[4].props as any).defaultSize).toBe('300px');
     });
 
     it('handles mixed valid and invalid elements', () => {
