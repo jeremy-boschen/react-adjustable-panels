@@ -356,15 +356,17 @@ describe('utils', () => {
     it('executes after wait period has elapsed', () => {
       const fn = vi.fn();
       const throttled = throttle(fn, 100);
+      const startTime = 1000000; // Use fixed start time
+      vi.setSystemTime(startTime);
 
       throttled('call1');
       expect(fn).toHaveBeenCalledTimes(1);
 
-      vi.advanceTimersByTime(50);
+      vi.setSystemTime(startTime + 50);
       throttled('call2');
       expect(fn).toHaveBeenCalledTimes(1); // Still throttled
 
-      vi.advanceTimersByTime(60); // Total 110ms
+      vi.setSystemTime(startTime + 110);
       throttled('call3');
       expect(fn).toHaveBeenCalledTimes(2); // Now executes
       expect(fn).toHaveBeenCalledWith('call3');
@@ -373,6 +375,8 @@ describe('utils', () => {
     it('schedules delayed execution when called within wait period', () => {
       const fn = vi.fn();
       const throttled = throttle(fn, 100);
+      const startTime = 1000000;
+      vi.setSystemTime(startTime);
 
       throttled('call1');
       expect(fn).toHaveBeenCalledTimes(1);
@@ -380,6 +384,7 @@ describe('utils', () => {
       throttled('call2'); // Should schedule
       expect(fn).toHaveBeenCalledTimes(1);
 
+      vi.setSystemTime(startTime + 100);
       vi.advanceTimersByTime(100);
       expect(fn).toHaveBeenCalledTimes(2);
       expect(fn).toHaveBeenCalledWith('call2');
