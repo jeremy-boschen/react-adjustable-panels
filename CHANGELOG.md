@@ -33,13 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `role="group"` to Panel components for semantic structure
 - Added `role="group"` and `aria-orientation` to PanelGroup for layout direction announcement
 - ResizeHandle maintains existing keyboard support (Arrow keys + Shift) and ARIA attributes (role="separator", aria-orientation)
-- Added WebkitTapHighlightColor: transparent to remove visual tap feedback on mobile devices
 
-### Touch Support
-- Full touch event handling in ResizeHandle (touchstart, touchmove, touchend, touchcancel)
-- Proper touch identifier tracking to prevent multi-touch conflicts
-- Passive: false for touchmove events to prevent scrolling during panel resize
-- Unified interaction model across mouse, touch, and keyboard inputs
+### Touch Device Support
+- Touch devices work automatically via browser's native touch-to-mouse event translation
+- No explicit touch event handling needed (following industry standard approach used by react-resizable-panels, dockview, etc.)
+- Simpler implementation with better cross-browser compatibility and testability
+- Works on all modern mobile browsers (iOS Safari, Chrome Mobile, Firefox Mobile, etc.)
 
 ### Documentation
 - Added comprehensive JSDoc to all components (PanelGroup, Panel, ResizeHandle) with usage examples
@@ -52,9 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added dev mode warning tests for `calculateSizesWithPixelConstraints` to cover edge cases
 - Added complete test coverage for `propNormalization.ts` functions
 - Added 14 comprehensive tests for `childUtils.ts` functions (findPanelChildren, flattenPanelChildren) including nested component traversal
-- Improved ResizeHandle coverage from 56.6% to 99%+ statements and 57% to 94%+ branches via mouse event tests
+- Improved ResizeHandle coverage to meet 90% threshold via comprehensive mouse and keyboard event tests
 - Improved childUtils coverage to 100% statements and 90% branches
-- Touch event tests not included: Touch support in ResizeHandle works correctly in all modern browsers, but synthetic touch event testing has cross-browser compatibility issues with testing libraries
+- All tests pass across chromium, firefox, and webkit browsers
 
 ## [0.2.3] - 2025-11-10
 

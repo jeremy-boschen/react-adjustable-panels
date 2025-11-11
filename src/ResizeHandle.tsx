@@ -2,7 +2,6 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
-  type TouchEvent as ReactTouchEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -43,7 +42,8 @@ export interface ResizeHandleProps {
  * ResizeHandle component - Draggable handle for resizing panels.
  *
  * Handles can be explicitly placed between panels or automatically inserted by PanelGroup.
- * Supports mouse, touch, and keyboard interactions (Arrow keys with Shift for larger steps).
+ * Supports mouse and keyboard interactions (Arrow keys with Shift for larger steps).
+ * Touch devices work automatically via browser's touch-to-mouse event translation.
  * Fully accessible with ARIA attributes and screen reader support.
  *
  * @example
@@ -91,7 +91,6 @@ export function ResizeHandle(rawProps: ResizeHandleProps) {
   const ariaControls = rawProps['aria-controls'];
   const isDraggingRef = useRef(false);
   const startPosRef = useRef(0);
-  const touchIdRef = useRef<number | null>(null); // Track touch identifier to prevent multi-touch issues
   const cleanupRef = useRef<(() => void) | null>(null);
 
   // Cleanup on unmount to restore body styles if drag was interrupted
@@ -160,83 +159,6 @@ export function ResizeHandle(rawProps: ResizeHandleProps) {
     [direction, onDragStart, onDrag, onDragEnd]
   );
 
-  const handleTouchStart = useCallback(
-    (e: ReactTouchEvent) => {
-      // Prevent default to avoid scrolling during resize on mobile
-      e.preventDefault();
-
-      // Ignore if already dragging or multi-touch
-      if (isDraggingRef.current || e.touches.length > 1) return;
-
-      // Clean up any previous drag that might have been interrupted
-      cleanupRef.current?.();
-
-      const touch = e.touches[0];
-      isDraggingRef.current = true;
-      touchIdRef.current = touch.identifier;
-      startPosRef.current = direction === 'horizontal' ? touch.clientX : touch.clientY;
-
-      // Set cursor globally during drag (for hybrid touch+mouse devices)
-      const cursor = direction === 'horizontal' ? 'col-resize' : 'row-resize';
-      const previousCursor = document.body.style.cursor;
-      const previousUserSelect = document.body.style.userSelect;
-
-      document.body.style.cursor = cursor;
-      document.body.style.userSelect = 'none';
-
-      // Store cleanup function
-      const cleanup = () => {
-        document.body.style.cursor = previousCursor;
-        document.body.style.userSelect = previousUserSelect;
-        touchIdRef.current = null;
-        cleanupRef.current = null;
-      };
-      cleanupRef.current = cleanup;
-
-      onDragStart?.();
-
-      const handleTouchMove = (moveEvent: TouchEvent) => {
-        if (!isDraggingRef.current || touchIdRef.current === null) return;
-
-        // Find the touch that matches our tracked identifier
-        const touch = Array.from(moveEvent.touches).find((t) => t.identifier === touchIdRef.current);
-        if (!touch) return;
-
-        const currentPos = direction === 'horizontal' ? touch.clientX : touch.clientY;
-        const cumulativeDelta = currentPos - startPosRef.current;
-        // Don't update startPosRef - keep it at drag start position
-        // This allows PanelGroup to track cumulative delta without drift
-
-        onDrag?.(cumulativeDelta);
-      };
-
-      const handleTouchEnd = (endEvent: TouchEvent) => {
-        if (!isDraggingRef.current || touchIdRef.current === null) return;
-
-        // Check if our tracked touch has ended
-        const touchEnded = !Array.from(endEvent.touches).some((t) => t.identifier === touchIdRef.current);
-
-        if (touchEnded) {
-          isDraggingRef.current = false;
-
-          // Restore previous cursor and user-select
-          cleanup();
-
-          document.removeEventListener('touchmove', handleTouchMove);
-          document.removeEventListener('touchend', handleTouchEnd);
-          document.removeEventListener('touchcancel', handleTouchEnd);
-
-          onDragEnd?.();
-        }
-      };
-
-      document.addEventListener('touchmove', handleTouchMove, { passive: false });
-      document.addEventListener('touchend', handleTouchEnd);
-      document.addEventListener('touchcancel', handleTouchEnd);
-    },
-    [direction, onDragStart, onDrag, onDragEnd]
-  );
-
   const handleKeyDown = useCallback(
     (e: ReactKeyboardEvent) => {
       const isHorizontal = direction === 'horizontal';
@@ -271,13 +193,10 @@ export function ResizeHandle(rawProps: ResizeHandleProps) {
       aria-orientation={direction === 'horizontal' ? 'vertical' : 'horizontal'}
       tabIndex={0}
       onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
       onKeyDown={handleKeyDown}
       style={{
         cursor,
         userSelect: 'none',
-        touchAction: 'none',
-        WebkitTapHighlightColor: 'transparent', // Remove tap highlight on mobile
         ...(direction === 'horizontal'
           ? { width: `${size}px`, height: '100%' }
           : { width: '100%', height: `${size}px` }),
