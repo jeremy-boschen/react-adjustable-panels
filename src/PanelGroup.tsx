@@ -27,6 +27,52 @@ import {
   throttle,
 } from './utils';
 
+/**
+ * PanelGroup component - Container for resizable panels with drag handles.
+ *
+ * Manages a group of resizable panels with automatic or manual resize handles.
+ * Supports horizontal and vertical layouts, pixel and percentage sizing,
+ * collapsible panels, touch/mouse/keyboard input, and provides an imperative
+ * API for programmatic control.
+ *
+ * @example
+ * ```tsx
+ * // Basic horizontal layout
+ * <PanelGroup direction="horizontal">
+ *   <Panel defaultSize="30%" minSize="200px">Sidebar</Panel>
+ *   <ResizeHandle />
+ *   <Panel defaultSize="auto">Main content</Panel>
+ * </PanelGroup>
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Vertical layout with callbacks
+ * <PanelGroup
+ *   direction="vertical"
+ *   onResize={(sizes) => console.log('Sizes:', sizes)}
+ * >
+ *   <Panel defaultSize="200px">Header</Panel>
+ *   <Panel defaultSize="auto">Content</Panel>
+ *   <Panel defaultSize="100px">Footer</Panel>
+ * </PanelGroup>
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Imperative API for programmatic control
+ * const groupRef = useRef<PanelGroupHandle>(null);
+ *
+ * const resetLayout = () => {
+ *   groupRef.current?.setSizes(['30%', 'auto']);
+ * };
+ *
+ * <PanelGroup ref={groupRef}>
+ *   <Panel>Left</Panel>
+ *   <Panel>Right</Panel>
+ * </PanelGroup>
+ * ```
+ */
 export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProps, ref) => {
   // Normalize props at component boundary - provides defaults for optional values
   const { children, direction, className, style, onResize, onResizeStart, onResizeEnd } = {
@@ -796,6 +842,8 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
     <div
       ref={containerRef}
       className={className}
+      role="group"
+      aria-orientation={direction === 'horizontal' ? 'horizontal' : 'vertical'}
       style={{
         display: 'flex',
         flexDirection,
