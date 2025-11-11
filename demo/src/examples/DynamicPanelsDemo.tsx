@@ -19,13 +19,13 @@ const PANEL_COLORS = [
 ];
 
 export default function DynamicPanelsDemo() {
-  // Horizontal panels state
+  // Horizontal panels state (outer)
   const [horizontalPanels, setHorizontalPanels] = useState<PanelItem[]>([
     { id: 'h-1', color: 'panel-blue', defaultSize: 'auto' },
     { id: 'h-2', color: 'panel-purple', defaultSize: 'auto' },
   ]);
 
-  // Vertical panels state
+  // Vertical panels state (nested inside)
   const [verticalPanels, setVerticalPanels] = useState<PanelItem[]>([
     { id: 'v-1', color: 'panel-teal', defaultSize: 'auto' },
     { id: 'v-2', color: 'panel-indigo', defaultSize: 'auto' },
@@ -118,68 +118,52 @@ export default function DynamicPanelsDemo() {
 
         <div className="control-group">
           <div style={{ fontSize: '0.85em', color: '#8b949e', marginTop: '0.5rem' }}>
-            💡 <strong>Tip:</strong> Add or remove panels dynamically. Each panel automatically adjusts its size using{' '}
-            <code>defaultSize="auto"</code>. Try adding 5+ panels and resizing them!
+            💡 <strong>Tip:</strong> Add or remove panels dynamically in nested layouts. Horizontal panels contain
+            vertical nested panels. Each panel uses <code>minSize="1"</code> and <code>defaultSize="auto"</code>. Try
+            adding 5+ panels!
           </div>
         </div>
       </div>
 
-      {/* Horizontal Layout */}
-      <div style={{ marginBottom: '1rem' }}>
-        <h3 style={{ marginBottom: '0.5rem', fontSize: '0.9em', color: '#8b949e' }}>Horizontal Layout</h3>
-        <div style={{ height: '250px', border: '1px solid #30363d', borderRadius: '6px', overflow: 'hidden' }}>
-          {/* @demo-code-start */}
-          <PanelGroup direction="horizontal" key={`h-${horizontalPanels.map(p => p.id).join('-')}`}>
-            {horizontalPanels.map((panel, index) => (
-              <Panel key={panel.id} defaultSize={panel.defaultSize} minSize="80px" className={panel.color}>
-                <div className="panel-content">
-                  <div className="panel-header">Panel {index + 1}</div>
-                  <div className="panel-body">
-                    <p>
-                      <strong>ID:</strong> {panel.id}
-                    </p>
-                    <p>
-                      <strong>Size:</strong> auto
-                    </p>
-                    <p>
-                      <strong>Min:</strong> 80px
-                    </p>
-                    {horizontalPanels.length > 1 && (
-                      <button
-                        className="btn btn-small"
-                        onClick={() => removeHorizontalPanel(panel.id)}
-                        style={{ marginTop: '0.5rem' }}
-                      >
-                        ❌ Remove
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </Panel>
-            ))}
-          </PanelGroup>
-          {/* @demo-code-end */}
-        </div>
-      </div>
-
-      {/* Vertical Layout */}
-      <div>
-        <h3 style={{ marginBottom: '0.5rem', fontSize: '0.9em', color: '#8b949e' }}>Vertical Layout</h3>
-        <div style={{ height: '250px', border: '1px solid #30363d', borderRadius: '6px', overflow: 'hidden' }}>
+      {/* @demo-code-start */}
+      <PanelGroup direction="horizontal" key={`h-${horizontalPanels.map(p => p.id).join('-')}`}>
+        {horizontalPanels.map((panel, index) => (
+          <Panel key={panel.id} defaultSize={panel.defaultSize} minSize="1" className={panel.color}>
+            <div className="panel-content">
+              <div className="panel-header">Horizontal Panel {index + 1}</div>
+              <div className="panel-body">
+                <p>
+                  <strong>ID:</strong> {panel.id}
+                </p>
+                <p>
+                  <strong>Min:</strong> 1px
+                </p>
+                {horizontalPanels.length > 1 && (
+                  <button
+                    className="btn btn-small"
+                    onClick={() => removeHorizontalPanel(panel.id)}
+                    style={{ marginTop: '0.5rem' }}
+                  >
+                    ❌ Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </Panel>
+        ))}
+        <Panel defaultSize="auto" minSize="1">
+          {/* Nested Vertical Layout */}
           <PanelGroup direction="vertical" key={`v-${verticalPanels.map(p => p.id).join('-')}`}>
             {verticalPanels.map((panel, index) => (
-              <Panel key={panel.id} defaultSize={panel.defaultSize} minSize="60px" className={panel.color}>
+              <Panel key={panel.id} defaultSize={panel.defaultSize} minSize="1" className={panel.color}>
                 <div className="panel-content">
-                  <div className="panel-header">Panel {index + 1}</div>
+                  <div className="panel-header">Vertical Panel {index + 1} (Nested)</div>
                   <div className="panel-body">
                     <p>
                       <strong>ID:</strong> {panel.id}
                     </p>
                     <p>
-                      <strong>Size:</strong> auto
-                    </p>
-                    <p>
-                      <strong>Min:</strong> 60px
+                      <strong>Min:</strong> 1px
                     </p>
                     {verticalPanels.length > 1 && (
                       <button
@@ -195,8 +179,9 @@ export default function DynamicPanelsDemo() {
               </Panel>
             ))}
           </PanelGroup>
-        </div>
-      </div>
+        </Panel>
+      </PanelGroup>
+      {/* @demo-code-end */}
     </div>
   );
 }
