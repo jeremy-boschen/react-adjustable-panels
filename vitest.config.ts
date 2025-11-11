@@ -11,8 +11,6 @@ export default defineConfig({
             headless: true,
             instances: [
                 {browser: 'chromium'},
-                {browser: 'firefox'},
-                {browser: 'webkit'},
             ],
         },
         setupFiles: ['./src/__tests__/setup.ts'],

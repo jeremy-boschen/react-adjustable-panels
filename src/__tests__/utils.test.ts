@@ -471,6 +471,73 @@ describe('utils', () => {
       expect(result[0]).toBe(200); // 20% of 1000
       expect(result[1]).toBe(800);
     });
+
+    describe('dev mode warnings', () => {
+      let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+
+      beforeEach(() => {
+        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        consoleWarnSpy.mockRestore();
+        vi.unstubAllGlobals();
+      });
+
+      it('warns when no auto panels and sizes do not match container', () => {
+        vi.stubGlobal('process', {
+          env: { NODE_ENV: 'development' },
+        });
+
+        const sizes: PanelSize[] = ['300px' as PanelSize, '400px' as PanelSize];
+        const pixelConstraints = [
+          { minPx: undefined, maxPx: undefined },
+          { minPx: undefined, maxPx: undefined },
+        ];
+
+        calculateSizesWithPixelConstraints(sizes, 1000, pixelConstraints);
+
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Panel sizes sum to 700.0px but container is 1000.0px')
+        );
+        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Consider using size="auto"'));
+      });
+
+      it('warns when auto panels have negative space', () => {
+        vi.stubGlobal('process', {
+          env: { NODE_ENV: 'development' },
+        });
+
+        const sizes: PanelSize[] = ['800px' as PanelSize, 'auto'];
+        const pixelConstraints = [
+          { minPx: undefined, maxPx: undefined },
+          { minPx: undefined, maxPx: undefined },
+        ];
+
+        calculateSizesWithPixelConstraints(sizes, 500, pixelConstraints);
+
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Fixed panel sizes sum to 800.0px but container is only 500.0px')
+        );
+        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Auto panels have -300.0px of space'));
+      });
+
+      it('does not warn in production mode', () => {
+        vi.stubGlobal('process', {
+          env: { NODE_ENV: 'production' },
+        });
+
+        const sizes: PanelSize[] = ['300px' as PanelSize, '400px' as PanelSize];
+        const pixelConstraints = [
+          { minPx: undefined, maxPx: undefined },
+          { minPx: undefined, maxPx: undefined },
+        ];
+
+        calculateSizesWithPixelConstraints(sizes, 1000, pixelConstraints);
+
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('parseSize with plain numbers', () => {
