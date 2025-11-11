@@ -424,7 +424,7 @@ describe('ResizeHandle', () => {
   describe('Touch Support', () => {
     // Helper to create Touch-like object that works across all browsers
     // Firefox doesn't have Touch constructor, WebKit doesn't allow calling it
-    const createTouch = (id: number, x: number, y: number) => {
+    const createTouch = (id: number, x: number, y: number): any => {
       // Try to use native Touch constructor if available (Chromium)
       if (typeof Touch !== 'undefined') {
         try {
@@ -457,7 +457,7 @@ describe('ResizeHandle', () => {
         radiusY: 0,
         rotationAngle: 0,
         force: 1,
-      } as Touch;
+      };
     };
 
     it('handles touch start and touch move for horizontal layout', () => {
