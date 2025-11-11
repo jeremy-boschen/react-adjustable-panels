@@ -50,6 +50,22 @@ export function normalizePanelSize(size: PanelSize | undefined): PanelSize {
   return size ?? 'auto';
 }
 
+/**
+ * Parses a size string into its numeric value and unit components.
+ *
+ * Supports pixels ("123px"), percentages ("45%"), auto sizing ("auto" or "*"),
+ * and plain numbers (auto-converted to pixels with dev warning).
+ *
+ * @param size - The size string to parse (e.g., "200px", "50%", "auto")
+ * @returns Parsed size object with value, unit, and original string
+ * @throws Error if size format is invalid
+ *
+ * @example
+ * parseSize("200px")  // { value: 200, unit: "px", original: "200px" }
+ * parseSize("50%")    // { value: 50, unit: "%", original: "50%" }
+ * parseSize("auto")   // { value: 0, unit: "auto", original: "auto" }
+ * parseSize("100")    // { value: 100, unit: "px", original: "100px" } (with dev warning)
+ */
 export function parseSize(size: PanelSize | undefined): ParsedSize {
   // Handle undefined (default to auto)
   if (size === undefined) {
@@ -99,6 +115,21 @@ export function parseSize(size: PanelSize | undefined): ParsedSize {
   );
 }
 
+/**
+ * Formats a numeric value and unit into a PanelSize string.
+ *
+ * Handles NaN values gracefully by defaulting to "auto" to prevent invalid size formats.
+ *
+ * @param value - Numeric value for the size
+ * @param unit - Unit type (px, %, or auto)
+ * @returns Formatted size string (e.g., "200px", "50%", "auto")
+ *
+ * @example
+ * formatSize(200, "px")   // "200px"
+ * formatSize(50, "%")     // "50%"
+ * formatSize(0, "auto")   // "auto"
+ * formatSize(NaN, "px")   // "auto" (safety fallback)
+ */
 export function formatSize(value: number, unit: 'px' | '%' | 'auto'): PanelSize {
   if (unit === 'auto') {
     return 'auto';
@@ -111,6 +142,18 @@ export function formatSize(value: number, unit: 'px' | '%' | 'auto'): PanelSize 
   return `${value}${unit}` as PanelSize;
 }
 
+/**
+ * Converts a parsed size to pixels based on container size.
+ *
+ * @param size - Parsed size object with value and unit
+ * @param containerSize - Container size in pixels (for percentage calculations)
+ * @returns Size in pixels (0 for auto sizes, which are calculated later)
+ *
+ * @example
+ * convertToPixels({ value: 200, unit: "px" }, 1000)   // 200
+ * convertToPixels({ value: 50, unit: "%" }, 1000)     // 500
+ * convertToPixels({ value: 0, unit: "auto" }, 1000)   // 0 (calculated later)
+ */
 export function convertToPixels(size: ParsedSize, containerSize: number): number {
   if (size.unit === 'auto') {
     // Auto size will be calculated later based on remaining space
@@ -122,6 +165,19 @@ export function convertToPixels(size: ParsedSize, containerSize: number): number
   return (size.value / 100) * containerSize;
 }
 
+/**
+ * Converts pixels back to the target unit type.
+ *
+ * @param pixels - Size in pixels to convert
+ * @param containerSize - Container size in pixels (for percentage calculations)
+ * @param targetUnit - Target unit type (px, %, or auto)
+ * @returns Converted value in target unit
+ *
+ * @example
+ * convertFromPixels(200, 1000, "px")   // 200
+ * convertFromPixels(500, 1000, "%")    // 50
+ * convertFromPixels(300, 1000, "auto") // 300 (no conversion for auto)
+ */
 export function convertFromPixels(pixels: number, containerSize: number, targetUnit: 'px' | '%' | 'auto'): number {
   if (targetUnit === 'auto') {
     // For auto, we don't convert - the pixel value is what was calculated
@@ -133,6 +189,20 @@ export function convertFromPixels(pixels: number, containerSize: number, targetU
   return (pixels / containerSize) * 100;
 }
 
+/**
+ * Clamps a size value between optional min and max bounds.
+ *
+ * @param size - Value to clamp
+ * @param min - Minimum value (optional)
+ * @param max - Maximum value (optional)
+ * @returns Clamped value
+ *
+ * @example
+ * clampSize(150, 100, 200)      // 150 (within bounds)
+ * clampSize(50, 100, 200)       // 100 (clamped to min)
+ * clampSize(250, 100, 200)      // 200 (clamped to max)
+ * clampSize(150, undefined, 200) // 150 (no min constraint)
+ */
 export function clampSize(size: number, min: number | undefined, max: number | undefined): number {
   let clamped = size;
   if (min !== undefined) {
@@ -144,6 +214,29 @@ export function clampSize(size: number, min: number | undefined, max: number | u
   return clamped;
 }
 
+/**
+ * Calculates panel sizes in pixels, applying constraints and distributing available space.
+ *
+ * This is the core sizing algorithm that:
+ * 1. Parses all size strings and converts to pixels
+ * 2. Separates auto panels from fixed-size panels
+ * 3. Distributes remaining space among auto panels
+ * 4. Applies min/max constraints with redistribution
+ * 5. Re-distributes space if constraints cause adjustments
+ *
+ * @param requestedSizes - Array of requested sizes for each panel
+ * @param containerSize - Total container size in pixels
+ * @param panelConstraints - Array of min/max constraints for each panel
+ * @returns Array of calculated pixel sizes for each panel
+ *
+ * @example
+ * calculateSizes(
+ *   ["200px", "auto", "30%"],
+ *   1000,
+ *   [{ minSize: "100px" }, {}, { maxSize: "400px" }]
+ * )
+ * // Returns approximate: [200, 500, 300] (depending on constraints)
+ */
 export function calculateSizes(
   requestedSizes: (PanelSize | undefined)[],
   containerSize: number,
