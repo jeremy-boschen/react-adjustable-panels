@@ -371,3 +371,137 @@ code {
 ::-webkit-scrollbar-thumb:hover {
   background: #484f58;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  /* Compact header on mobile */
+  .app-header {
+    padding: 1rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .header-links {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header-links a {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  /* Hide sidebar on mobile, show demo full width */
+  .sidebar-panel {
+    display: none;
+  }
+
+  /* Ensure demo content uses full width on mobile */
+  .demo-panel {
+    width: 100% !important;
+  }
+
+  /* Reduce padding on mobile */
+  .demo-content {
+    padding: 1rem;
+  }
+
+  .demo-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .demo-header p {
+    font-size: 0.875rem;
+  }
+
+  .sidebar {
+    padding: 1rem;
+  }
+
+  .panel-content {
+    padding: 1rem;
+  }
+
+  .panel-header {
+    font-size: 1rem;
+  }
+
+  /* Larger touch targets for buttons */
+  .btn {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  .demo-nav-item {
+    min-height: 44px;
+    padding: 0.875rem;
+  }
+
+  /* Stack button groups on mobile */
+  .button-group {
+    flex-direction: column;
+  }
+
+  .button-group .btn {
+    width: 100%;
+  }
+
+  /* Adjust event log for mobile */
+  .event-log {
+    height: 120px;
+    font-size: 0.8rem;
+  }
+
+  /* Footer smaller on mobile */
+  .app-footer {
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Tablet breakpoint */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .app-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .sidebar-panel {
+    min-width: 200px !important;
+  }
+
+  .demo-content {
+    padding: 1.25rem;
+  }
+
+  .panel-content {
+    padding: 1.25rem;
+  }
+}
+
+/* Large touch targets for all touch devices */
+@media (hover: none) and (pointer: coarse) {
+  /* This targets touch-only devices */
+  .btn,
+  .demo-nav-item,
+  [data-resize-handle="true"] {
+    min-height: 44px;
+  }
+
+  /* Make resize handles easier to grab on touch */
+  [data-resize-handle="true"][data-direction="horizontal"] {
+    min-width: 20px;
+  }
+
+  [data-resize-handle="true"][data-direction="vertical"] {
+    min-height: 20px;
+  }
+}

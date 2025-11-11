@@ -1,10 +1,14 @@
 /* Default styles for resize handles - seamless overlay with no gap */
 [data-resize-handle="true"] {
-  --resize-handle-hover-color: rgba(0, 102, 204, 0.4);
-  --resize-handle-active-color: rgba(0, 102, 204, 0.8);
+  /* CSS variables for customization (prefixed with --rap- to avoid collisions) */
+  --rap-handle-hover-color: rgba(0, 102, 204, 0.4);
+  --rap-handle-active-color: rgba(0, 102, 204, 0.8);
+  --rap-handle-z-index: 50;
+  --rap-handle-transition: all 0.2s ease;
+
   flex-shrink: 0;
   position: relative;
-  z-index: 50; /* Above panels */
+  z-index: var(--rap-handle-z-index); /* Above panels */
   background: transparent;
 }
 
@@ -25,7 +29,7 @@
   content: '';
   position: absolute;
   background: transparent;
-  transition: all 0.2s ease;
+  transition: var(--rap-handle-transition);
   pointer-events: none; /* Let clicks pass through to the handle */
 }
 
@@ -50,23 +54,23 @@
 /* Hover state */
 [data-resize-handle="true"][data-direction="horizontal"]:hover::before {
   width: 2px;
-  background: var(--resize-handle-hover-color);
+  background: var(--rap-handle-hover-color);
 }
 
 [data-resize-handle="true"][data-direction="vertical"]:hover::before {
   height: 2px;
-  background: var(--resize-handle-hover-color);
+  background: var(--rap-handle-hover-color);
 }
 
 /* Active state */
 [data-resize-handle="true"][data-direction="horizontal"]:active::before {
   width: 3px;
-  background: var(--resize-handle-active-color);
+  background: var(--rap-handle-active-color);
 }
 
 [data-resize-handle="true"][data-direction="vertical"]:active::before {
   height: 3px;
-  background: var(--resize-handle-active-color);
+  background: var(--rap-handle-active-color);
 }
 
 [data-panel-group] {

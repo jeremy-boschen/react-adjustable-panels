@@ -16,8 +16,63 @@ import { Panel } from './Panel';
 import { normalizePanelGroupProps, normalizePanelProps } from './propNormalization';
 import { ResizeHandle, type ResizeHandleProps } from './ResizeHandle';
 import type { PanelGroupHandle, PanelGroupProps, PanelProps, PanelSize, PanelSizeInfo, ResizeInfo } from './types';
-import { calculateSizes, clampSize, convertFromPixels, convertToPixels, formatSize, parseSize } from './utils';
+import {
+  calculateSizes,
+  calculateSizesWithPixelConstraints,
+  clampSize,
+  convertFromPixels,
+  convertToPixels,
+  formatSize,
+  parseSize,
+  throttle,
+} from './utils';
 
+/**
+ * PanelGroup component - Container for resizable panels with drag handles.
+ *
+ * Manages a group of resizable panels with automatic or manual resize handles.
+ * Supports horizontal and vertical layouts, pixel and percentage sizing,
+ * collapsible panels, touch/mouse/keyboard input, and provides an imperative
+ * API for programmatic control.
+ *
+ * @example
+ * ```tsx
+ * // Basic horizontal layout
+ * <PanelGroup direction="horizontal">
+ *   <Panel defaultSize="30%" minSize="200px">Sidebar</Panel>
+ *   <ResizeHandle />
+ *   <Panel defaultSize="auto">Main content</Panel>
+ * </PanelGroup>
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Vertical layout with callbacks
+ * <PanelGroup
+ *   direction="vertical"
+ *   onResize={(sizes) => console.log('Sizes:', sizes)}
+ * >
+ *   <Panel defaultSize="200px">Header</Panel>
+ *   <Panel defaultSize="auto">Content</Panel>
+ *   <Panel defaultSize="100px">Footer</Panel>
+ * </PanelGroup>
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Imperative API for programmatic control
+ * const groupRef = useRef<PanelGroupHandle>(null);
+ *
+ * const resetLayout = () => {
+ *   groupRef.current?.setSizes(['30%', 'auto']);
+ * };
+ *
+ * <PanelGroup ref={groupRef}>
+ *   <Panel>Left</Panel>
+ *   <Panel>Right</Panel>
+ * </PanelGroup>
+ * ```
+ */
 export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProps, ref) => {
   // Normalize props at component boundary - provides defaults for optional values
   const { children, direction, className, style, onResize, onResizeStart, onResizeEnd } = {
@@ -40,6 +95,12 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
   const collapsedSizeRef = useRef<Array<PanelSize | undefined>>([]);
   const collapsedStateRef = useRef<boolean[]>([]);
   const collapseCallbacksRef = useRef<Array<((collapsed: boolean) => void) | undefined>>([]);
+
+  // Constraint cache for performance optimization
+  const constraintCacheRef = useRef<{
+    containerSize: number;
+    constraints: Array<{ minPx?: number; maxPx?: number }>;
+  } | null>(null);
 
   // Initialize panel sizes and constraints
   useEffect(() => {
@@ -132,8 +193,32 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
       const rect = containerRef.current.getBoundingClientRect();
       const containerSize = direction === 'horizontal' ? rect.width : rect.height;
 
-      // panelSizes are already normalized at the component boundary, so no need for defensive checks here
-      const pixels = calculateSizes(panelSizes, containerSize, constraintsRef.current);
+      // Check if we need to recalculate constraint cache
+      // Only recalculate when container size changes significantly (>1px)
+      const needsConstraintUpdate =
+        !constraintCacheRef.current || Math.abs(constraintCacheRef.current.containerSize - containerSize) > 1;
+
+      if (needsConstraintUpdate) {
+        // Convert constraints to pixels once and cache them
+        const pixelConstraints = constraintsRef.current.map(c => ({
+          minPx: c.minSize ? convertToPixels(parseSize(c.minSize), containerSize) : undefined,
+          maxPx: c.maxSize ? convertToPixels(parseSize(c.maxSize), containerSize) : undefined,
+        }));
+
+        constraintCacheRef.current = {
+          containerSize,
+          constraints: pixelConstraints,
+        };
+      }
+
+      // Use optimized calculation with cached pixel constraints
+      // TypeScript: constraintCacheRef.current is guaranteed non-null here because
+      // we either just set it in the if block above, or it was already set previously
+      const pixels = calculateSizesWithPixelConstraints(
+        panelSizes,
+        containerSize,
+        constraintCacheRef.current!.constraints
+      );
 
       // Override with collapsed sizes for panels that are collapsed
       // This prevents minSize enforcement from breaking collapsed state
@@ -163,9 +248,13 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
       setPixelSizes(pixels);
     };
 
+    // Throttle resize observer to ~60fps (16ms)
+    const throttledUpdateSizes = throttle(updateSizes, 16);
+
+    // Call updateSizes immediately on mount (not throttled)
     updateSizes();
 
-    const resizeObserver = new ResizeObserver(updateSizes);
+    const resizeObserver = new ResizeObserver(throttledUpdateSizes);
     resizeObserver.observe(containerRef.current);
 
     return () => resizeObserver.disconnect();
@@ -377,6 +466,14 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
   // Apply collapse logic to proposed sizes for the panels being resized
   const applyCollapseLogic = useCallback(
     (proposedPixelSizes: number[], containerSize: number, leftIndex: number, rightIndex: number): number[] => {
+      // Performance optimization: Early exit if neither panel has collapse support
+      const hasCollapsiblePanels =
+        collapsedSizeRef.current[leftIndex] !== undefined || collapsedSizeRef.current[rightIndex] !== undefined;
+
+      if (!hasCollapsiblePanels) {
+        return proposedPixelSizes; // Return original array without cloning
+      }
+
       const finalSizes = [...proposedPixelSizes];
       const collapsedTransitions: Array<{ index: number; collapsed: boolean }> = [];
 
@@ -745,6 +842,8 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
     <div
       ref={containerRef}
       className={className}
+      role="group"
+      aria-orientation={direction === 'horizontal' ? 'horizontal' : 'vertical'}
       style={{
         display: 'flex',
         flexDirection,
