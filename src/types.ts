@@ -1,7 +1,19 @@
 import type { CSSProperties, ReactNode } from 'react';
 
+/**
+ * Supported size formats for panels.
+ *
+ * - Pixels: `"200px"` - Fixed size in pixels
+ * - Percentage: `"50%"` - Percentage of container size
+ * - Auto: `"auto"` or `"*"` - Flexible size that fills remaining space
+ *
+ * Note: Plain numbers (e.g., "100") are auto-converted to pixels with a dev warning.
+ */
 export type PanelSize = `${number}px` | `${number}%` | 'auto' | '*';
 
+/**
+ * Layout direction for panels and resize handles.
+ */
 export type Direction = 'horizontal' | 'vertical';
 
 /**
@@ -32,10 +44,19 @@ export interface ResizeInfo {
   direction: Direction;
 }
 
+/**
+ * Props for the Panel component.
+ *
+ * Panels can have fixed sizes or flexible auto-fill behavior. They support
+ * min/max constraints and collapsible behavior with automatic snap logic.
+ */
 export interface PanelProps {
   children?: ReactNode;
+  /** Initial size of the panel (default: "auto") */
   defaultSize?: PanelSize;
+  /** Minimum size constraint */
   minSize?: PanelSize;
+  /** Maximum size constraint */
   maxSize?: PanelSize;
   /** When set, panel can collapse to this size (must be < minSize) */
   collapsedSize?: PanelSize;
@@ -47,8 +68,16 @@ export interface PanelProps {
   style?: CSSProperties;
 }
 
+/**
+ * Props for the PanelGroup component.
+ *
+ * PanelGroup manages a collection of resizable panels with automatic or manual
+ * resize handles. Supports both controlled and uncontrolled patterns via callbacks
+ * and ref-based imperative API.
+ */
 export interface PanelGroupProps {
   children: ReactNode;
+  /** Layout direction (default: "horizontal") */
   direction?: Direction;
   className?: string;
   style?: CSSProperties;
@@ -67,8 +96,27 @@ export interface PanelGroupProps {
   onResizeEnd?: (info: ResizeInfo) => PanelSizeInfo[] | undefined;
 }
 
+/**
+ * Imperative API handle for PanelGroup ref.
+ *
+ * Provides programmatic control over panel sizing and collapse state.
+ * Access via `const groupRef = useRef<PanelGroupHandle>(null)`.
+ *
+ * @example
+ * ```tsx
+ * const groupRef = useRef<PanelGroupHandle>(null);
+ *
+ * // Programmatically set sizes
+ * groupRef.current?.setSizes(['30%', 'auto']);
+ *
+ * // Collapse/expand panels
+ * groupRef.current?.collapsePanel(0);
+ * ```
+ */
 export interface PanelGroupHandle {
+  /** Set sizes for all panels */
   setSizes: (sizes: PanelSize[]) => void;
+  /** Get current sizes of all panels */
   getSizes: () => PanelSize[];
   /** Collapse a panel to its collapsedSize */
   collapsePanel: (panelIndex: number) => void;
@@ -80,8 +128,16 @@ export interface PanelGroupHandle {
   isCollapsed: (panelIndex: number) => boolean;
 }
 
+/**
+ * Internal representation of a parsed size value.
+ *
+ * Used internally to separate the numeric value from its unit for calculations.
+ */
 export interface ParsedSize {
+  /** Numeric value extracted from size string */
   value: number;
+  /** Unit type (px, %, or auto) */
   unit: 'px' | '%' | 'auto';
+  /** Original PanelSize string */
   original: PanelSize;
 }
