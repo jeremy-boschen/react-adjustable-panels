@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- CSS variables for customizable resize handle colors:
+  - `--resize-handle-hover-color` (default: `rgba(0, 102, 204, 0.4)`)
+  - `--resize-handle-active-color` (default: `rgba(0, 102, 204, 0.8)`)
+
+### Changed
+- Increased resize handle z-index from 10 to 50 for better layering control
+
 ## [0.2.3] - 2025-11-10
 
 ### Fixed
