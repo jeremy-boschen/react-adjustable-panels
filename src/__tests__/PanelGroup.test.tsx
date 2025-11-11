@@ -2245,16 +2245,12 @@ describe('PanelGroup Integration Tests', () => {
       render(
         <div style={{ width: '1000px', height: '600px' }}>
           <PanelGroup direction="horizontal">
-            <>
-              <Panel defaultSize="40%">
-                <div data-testid="panel-1">Panel 1</div>
-              </Panel>
-            </>
-            <>
-              <Panel defaultSize="60%">
-                <div data-testid="panel-2">Panel 2</div>
-              </Panel>
-            </>
+            <Panel defaultSize="40%">
+              <div data-testid="panel-1">Panel 1</div>
+            </Panel>
+            <Panel defaultSize="60%">
+              <div data-testid="panel-2">Panel 2</div>
+            </Panel>
           </PanelGroup>
         </div>
       );
@@ -2501,9 +2497,7 @@ describe('PanelGroup Integration Tests', () => {
             <div>
               <Panel defaultSize="25%">Panel 1</Panel>
             </div>
-            <>
-              <Panel defaultSize="25%">Panel 2</Panel>
-            </>
+            <Panel defaultSize="25%">Panel 2</Panel>
             <Panel defaultSize="25%">Panel 3</Panel>
             <div>
               <div>

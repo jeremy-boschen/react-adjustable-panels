@@ -425,7 +425,7 @@ code {
 
   /* Ensure demo content uses full width on mobile */
   .demo-panel {
-    width: 100% !important;
+    width: 100%;
   }
 
   /* Reduce padding on mobile */
@@ -494,7 +494,7 @@ code {
   }
 
   .sidebar-panel {
-    min-width: 200px !important;
+    min-width: 200px;
   }
 
   .demo-content {

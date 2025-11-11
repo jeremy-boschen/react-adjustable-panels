@@ -11,10 +11,8 @@ declare const process: { env?: { NODE_ENV?: string } } | undefined;
  * @param wait - Minimum time in milliseconds between function executions
  * @returns Throttled function
  */
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
+// biome-ignore lint/suspicious/noExplicitAny: Generic function type requires any for maximum flexibility
+export function throttle<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let previous = 0;
 
@@ -90,7 +88,10 @@ export function parseSize(size: PanelSize | undefined): ParsedSize {
   if (match) {
     const value = parseFloat(match[1]);
     // Auto-convert plain numbers to pixels for better developer experience
-    if (typeof process !== 'undefined' && (process.env?.NODE_ENV === 'development' || process.env?.NODE_ENV === 'dev')) {
+    if (
+      typeof process !== 'undefined' &&
+      (process.env?.NODE_ENV === 'development' || process.env?.NODE_ENV === 'dev')
+    ) {
       console.warn(
         `[react-adjustable-panels] Size value "${size}" is missing a unit. Automatically treating it as "${size}px". ` +
           `Please use explicit units: "123px", "45%", "auto", or "*" to avoid this warning.`

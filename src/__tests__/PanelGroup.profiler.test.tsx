@@ -267,6 +267,7 @@ describe('PanelGroup Performance Profiling', () => {
         <div style={{ width: '1000px', height: '600px' }}>
           <PanelGroup direction="horizontal">
             {Array.from({ length: 10 }, (_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: Static array for testing, order never changes
               <div key={i}>
                 <Panel defaultSize="10%">Panel {i + 1}</Panel>
               </div>

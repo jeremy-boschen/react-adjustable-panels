@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizePanelGroupProps, normalizePanelProps } from '../propNormalization';
-import type { PanelGroupProps, PanelProps } from '../types';
+import type { PanelGroupProps, PanelProps, ResizeInfo } from '../types';
 
 describe('propNormalization', () => {
   describe('normalizePanelGroupProps', () => {
@@ -26,9 +26,9 @@ describe('propNormalization', () => {
     });
 
     it('preserves all optional props', () => {
-      const onResize = (_info: any) => undefined;
-      const onResizeStart = (_info: any) => {};
-      const onResizeEnd = (_info: any) => undefined;
+      const onResize = (_info: ResizeInfo) => undefined;
+      const onResizeStart = (_info: ResizeInfo) => {};
+      const onResizeEnd = (_info: ResizeInfo) => undefined;
 
       const props: PanelGroupProps = {
         children: null,
