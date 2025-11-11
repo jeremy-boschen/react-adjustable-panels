@@ -1,12 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PanelSize } from '../types';
 import {
   calculateSizes,
+  calculateSizesWithPixelConstraints,
   convertFromPixels,
   convertToPixels,
   formatSize,
   normalizePanelSize,
   parseSize,
+  throttle,
 } from '../utils';
 
 describe('utils', () => {
@@ -318,6 +320,201 @@ describe('utils', () => {
 
       // Should not warn in production
       expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('throttle', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('executes function immediately on first call', () => {
+      const fn = vi.fn();
+      const throttled = throttle(fn, 100);
+
+      throttled('arg1');
+      expect(fn).toHaveBeenCalledTimes(1);
+      expect(fn).toHaveBeenCalledWith('arg1');
+    });
+
+    it('throttles subsequent calls within wait period', () => {
+      const fn = vi.fn();
+      const throttled = throttle(fn, 100);
+
+      throttled('call1');
+      throttled('call2');
+      throttled('call3');
+
+      expect(fn).toHaveBeenCalledTimes(1);
+      expect(fn).toHaveBeenCalledWith('call1');
+    });
+
+    it('executes after wait period has elapsed', () => {
+      const fn = vi.fn();
+      const throttled = throttle(fn, 100);
+
+      throttled('call1');
+      expect(fn).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(50);
+      throttled('call2');
+      expect(fn).toHaveBeenCalledTimes(1); // Still throttled
+
+      vi.advanceTimersByTime(60); // Total 110ms
+      throttled('call3');
+      expect(fn).toHaveBeenCalledTimes(2); // Now executes
+      expect(fn).toHaveBeenCalledWith('call3');
+    });
+
+    it('schedules delayed execution when called within wait period', () => {
+      const fn = vi.fn();
+      const throttled = throttle(fn, 100);
+
+      throttled('call1');
+      expect(fn).toHaveBeenCalledTimes(1);
+
+      throttled('call2'); // Should schedule
+      expect(fn).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(100);
+      expect(fn).toHaveBeenCalledTimes(2);
+      expect(fn).toHaveBeenCalledWith('call2');
+    });
+
+    it('handles multiple arguments', () => {
+      const fn = vi.fn();
+      const throttled = throttle(fn, 100);
+
+      throttled('arg1', 'arg2', 'arg3');
+      expect(fn).toHaveBeenCalledWith('arg1', 'arg2', 'arg3');
+    });
+  });
+
+  describe('calculateSizesWithPixelConstraints', () => {
+    it('calculates sizes using pre-computed pixel constraints', () => {
+      const sizes: PanelSize[] = ['200px' as PanelSize, 'auto'];
+      const pixelConstraints = [
+        { minPx: 150, maxPx: 300 },
+        { minPx: 100, maxPx: undefined },
+      ];
+
+      const result = calculateSizesWithPixelConstraints(sizes, 1000, pixelConstraints);
+
+      expect(result[0]).toBe(200);
+      expect(result[1]).toBe(800);
+    });
+
+    it('applies pixel constraints without re-parsing', () => {
+      const sizes: PanelSize[] = ['100px' as PanelSize, 'auto'];
+      const pixelConstraints = [
+        { minPx: 200, maxPx: undefined }, // Min constraint will clamp 100px to 200px
+        { minPx: undefined, maxPx: undefined },
+      ];
+
+      const result = calculateSizesWithPixelConstraints(sizes, 1000, pixelConstraints);
+
+      expect(result[0]).toBe(200); // Clamped to min
+      expect(result[1]).toBe(800);
+    });
+
+    it('handles multiple auto panels with constraints', () => {
+      const sizes: PanelSize[] = ['200px' as PanelSize, 'auto', 'auto'];
+      const pixelConstraints = [
+        { minPx: undefined, maxPx: undefined },
+        { minPx: 300, maxPx: undefined },
+        { minPx: undefined, maxPx: 400 },
+      ];
+
+      const result = calculateSizesWithPixelConstraints(sizes, 1000, pixelConstraints);
+
+      expect(result[0]).toBe(200);
+      expect(result[1]).toBeGreaterThanOrEqual(300);
+      expect(result[2]).toBeLessThanOrEqual(400);
+      expect(result[1] + result[2] + result[0]).toBeCloseTo(1000, 0);
+    });
+
+    it('redistributes space when auto panel is clamped', () => {
+      const sizes: PanelSize[] = ['200px' as PanelSize, 'auto', 'auto'];
+      const pixelConstraints = [
+        { minPx: undefined, maxPx: undefined },
+        { minPx: undefined, maxPx: 200 }, // Clamp this auto panel
+        { minPx: undefined, maxPx: undefined },
+      ];
+
+      const result = calculateSizesWithPixelConstraints(sizes, 1000, pixelConstraints);
+
+      expect(result[0]).toBe(200);
+      expect(result[1]).toBeLessThanOrEqual(200);
+      // Last auto panel gets the adjustment
+      const sum = result[0] + result[1] + result[2];
+      expect(sum).toBeCloseTo(1000, 0);
+    });
+
+    it('handles percentage sizes with pixel constraints', () => {
+      const sizes: PanelSize[] = ['20%' as PanelSize, 'auto'];
+      const pixelConstraints = [
+        { minPx: 150, maxPx: 250 },
+        { minPx: undefined, maxPx: undefined },
+      ];
+
+      const result = calculateSizesWithPixelConstraints(sizes, 1000, pixelConstraints);
+
+      expect(result[0]).toBe(200); // 20% of 1000
+      expect(result[1]).toBe(800);
+    });
+  });
+
+  describe('parseSize with plain numbers', () => {
+    let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleWarnSpy.mockRestore();
+      vi.unstubAllGlobals();
+    });
+
+    it('warns in development mode for plain numbers', () => {
+      vi.stubGlobal('process', {
+        env: { NODE_ENV: 'development' },
+      });
+
+      parseSize('100' as PanelSize);
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[react-adjustable-panels] Size value "100" is missing a unit')
+      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Automatically treating it as "100px"')
+      );
+    });
+
+    it('does not warn in production mode for plain numbers', () => {
+      vi.stubGlobal('process', {
+        env: { NODE_ENV: 'production' },
+      });
+
+      const result = parseSize('100' as PanelSize);
+
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(result.value).toBe(100);
+      expect(result.unit).toBe('px');
+    });
+
+    it('does not warn for undefined process', () => {
+      vi.stubGlobal('process', undefined);
+
+      const result = parseSize('100' as PanelSize);
+
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(result.value).toBe(100);
+      expect(result.unit).toBe('px');
     });
   });
 });
