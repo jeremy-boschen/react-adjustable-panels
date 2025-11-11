@@ -8,11 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- CSS variables for customizable resize handle colors:
-  - `--resize-handle-hover-color` (default: `rgba(0, 102, 204, 0.4)`)
-  - `--resize-handle-active-color` (default: `rgba(0, 102, 204, 0.8)`)
+- CSS variables for customizable resize handles (prefixed with `--rap-` to avoid collisions):
+  - `--rap-handle-hover-color` (default: `rgba(0, 102, 204, 0.4)`)
+  - `--rap-handle-active-color` (default: `rgba(0, 102, 204, 0.8)`)
+  - `--rap-handle-z-index` (default: `50`)
+  - `--rap-handle-transition` (default: `all 0.2s ease`)
 - New `throttle` utility function for performance optimization
 - New `calculateSizesWithPixelConstraints` function for optimized size calculations with cached constraints
+- Explicit id attribute support for Panel and ResizeHandle components with TypeScript definitions
+- ARIA attributes (aria-label, aria-labelledby, aria-controls) for improved accessibility
 
 ### Changed
 - Increased resize handle z-index from 10 to 50 for better layering control
