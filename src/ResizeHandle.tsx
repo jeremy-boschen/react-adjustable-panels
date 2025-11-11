@@ -33,6 +33,10 @@ export interface ResizeHandleProps {
   children?: ReactNode;
   /** Accessible label for screen readers. Default: "Resize panels" */
   'aria-label'?: string;
+  /** DOM id attribute for the handle element (useful for aria-controls references) */
+  id?: string;
+  /** ARIA controls - references to panel IDs that this handle controls */
+  'aria-controls'?: string;
 }
 
 /**
@@ -83,6 +87,8 @@ export function ResizeHandle(rawProps: ResizeHandleProps) {
   const { direction, onDragStart, onDrag, onDragEnd, className, style, size, children } =
     normalizeResizeHandleProps(rawProps);
   const ariaLabel = rawProps['aria-label'] ?? 'Resize panels';
+  const id = rawProps.id;
+  const ariaControls = rawProps['aria-controls'];
   const isDraggingRef = useRef(false);
   const startPosRef = useRef(0);
   const touchIdRef = useRef<number | null>(null); // Track touch identifier to prevent multi-touch issues
@@ -257,9 +263,11 @@ export function ResizeHandle(rawProps: ResizeHandleProps) {
 
   return (
     <div
+      id={id}
       className={className}
       role="separator"
       aria-label={ariaLabel}
+      aria-controls={ariaControls}
       aria-orientation={direction === 'horizontal' ? 'vertical' : 'horizontal'}
       tabIndex={0}
       onMouseDown={handleMouseDown}

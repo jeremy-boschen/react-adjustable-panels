@@ -66,6 +66,12 @@ export interface PanelProps {
   onCollapse?: (collapsed: boolean) => void;
   className?: string;
   style?: CSSProperties;
+  /** DOM id attribute for the panel element (useful for aria-controls, aria-labelledby) */
+  id?: string;
+  /** ARIA label for the panel */
+  'aria-label'?: string;
+  /** ARIA labelledby reference for the panel */
+  'aria-labelledby'?: string;
 }
 
 /**
