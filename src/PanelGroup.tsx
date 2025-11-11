@@ -166,10 +166,12 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
       }
 
       // Use optimized calculation with cached pixel constraints
+      // TypeScript: constraintCacheRef.current is guaranteed non-null here because
+      // we either just set it in the if block above, or it was already set previously
       const pixels = calculateSizesWithPixelConstraints(
         panelSizes,
         containerSize,
-        constraintCacheRef.current.constraints
+        constraintCacheRef.current!.constraints
       );
 
       // Override with collapsed sizes for panels that are collapsed
