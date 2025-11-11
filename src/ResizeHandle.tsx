@@ -1,7 +1,7 @@
 import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
-  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -42,8 +42,8 @@ export interface ResizeHandleProps {
  * ResizeHandle component - Draggable handle for resizing panels.
  *
  * Handles can be explicitly placed between panels or automatically inserted by PanelGroup.
- * Supports mouse and keyboard interactions (Arrow keys with Shift for larger steps).
- * Touch devices work automatically via browser's touch-to-mouse event translation.
+ * Supports pointer (mouse, touch, pen) and keyboard interactions (Arrow keys with Shift for larger steps).
+ * Uses PointerEvent API for unified input handling across all devices.
  * Fully accessible with ARIA attributes and screen reader support.
  *
  * @example
@@ -100,8 +100,8 @@ export function ResizeHandle(rawProps: ResizeHandleProps) {
     };
   }, []);
 
-  const handleMouseDown = useCallback(
-    (e: ReactMouseEvent) => {
+  const handlePointerDown = useCallback(
+    (e: ReactPointerEvent) => {
       e.preventDefault();
 
       // Clean up any previous drag that might have been interrupted
@@ -128,7 +128,7 @@ export function ResizeHandle(rawProps: ResizeHandleProps) {
 
       onDragStart?.();
 
-      const handleMouseMove = (moveEvent: MouseEvent) => {
+      const handlePointerMove = (moveEvent: PointerEvent) => {
         if (!isDraggingRef.current) return;
 
         const currentPos = direction === 'horizontal' ? moveEvent.clientX : moveEvent.clientY;
@@ -139,22 +139,24 @@ export function ResizeHandle(rawProps: ResizeHandleProps) {
         onDrag?.(cumulativeDelta);
       };
 
-      const handleMouseUp = () => {
+      const handlePointerUp = () => {
         if (isDraggingRef.current) {
           isDraggingRef.current = false;
 
           // Restore previous cursor and user-select
           cleanup();
 
-          document.removeEventListener('mousemove', handleMouseMove);
-          document.removeEventListener('mouseup', handleMouseUp);
+          document.removeEventListener('pointermove', handlePointerMove);
+          document.removeEventListener('pointerup', handlePointerUp);
+          document.removeEventListener('pointercancel', handlePointerUp);
 
           onDragEnd?.();
         }
       };
 
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('pointermove', handlePointerMove);
+      document.addEventListener('pointerup', handlePointerUp);
+      document.addEventListener('pointercancel', handlePointerUp);
     },
     [direction, onDragStart, onDrag, onDragEnd]
   );
@@ -192,7 +194,7 @@ export function ResizeHandle(rawProps: ResizeHandleProps) {
       aria-controls={ariaControls}
       aria-orientation={direction === 'horizontal' ? 'vertical' : 'horizontal'}
       tabIndex={0}
-      onMouseDown={handleMouseDown}
+      onPointerDown={handlePointerDown}
       onKeyDown={handleKeyDown}
       style={{
         cursor,
