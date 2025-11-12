@@ -94,6 +94,7 @@ describe('PanelGroup Performance Benchmarks', () => {
         <div style={{ width: '1000px', height: '600px' }}>
           <PanelGroup direction="horizontal">
             {Array.from({ length: 10 }, (_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: Static test array, order never changes
               <Panel key={i} defaultSize="10%">
                 Panel {i + 1}
               </Panel>
@@ -108,6 +109,7 @@ describe('PanelGroup Performance Benchmarks', () => {
         <div style={{ width: '1000px', height: '600px' }}>
           <PanelGroup direction="horizontal">
             {Array.from({ length: 10 }, (_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: Static test array, order never changes
               <div key={i}>
                 <Panel defaultSize="10%">Panel {i + 1}</Panel>
               </div>
@@ -143,9 +145,7 @@ describe('PanelGroup Performance Benchmarks', () => {
             <div>
               <Panel defaultSize="25%">Wrapped Panel 1</Panel>
             </div>
-            <>
-              <Panel defaultSize="25%">Fragment Panel</Panel>
-            </>
+            <Panel defaultSize="25%">Fragment Panel</Panel>
             <div>
               <div>
                 <Panel defaultSize="25%">Deep Wrapped Panel</Panel>

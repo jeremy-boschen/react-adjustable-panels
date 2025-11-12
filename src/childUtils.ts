@@ -8,9 +8,11 @@ import { Children, isValidElement, type ReactElement, type ReactNode } from 'rea
  * @param ResizeHandleType - The ResizeHandle component type to exclude
  * @returns Array of Panel elements in the order they appear in the tree
  */
-export function findPanelChildren<T = any>(
+export function findPanelChildren<T = unknown>(
   children: ReactNode,
+  // biome-ignore lint/suspicious/noExplicitAny: Component types can be any React component including forwardRef
   PanelType: any,
+  // biome-ignore lint/suspicious/noExplicitAny: Component types can be any React component including forwardRef
   ResizeHandleType: any
 ): ReactElement<T>[] {
   const result: ReactElement<T>[] = [];
@@ -34,8 +36,8 @@ export function findPanelChildren<T = any>(
         result.push(child as ReactElement<T>);
       } else {
         // Not a Panel - recursively search its children
-        const props = child.props as any;
-        if (props && props.children) {
+        const props = child.props as { children?: ReactNode };
+        if (props?.children) {
           traverse(props.children);
         }
       }
@@ -55,7 +57,13 @@ export function findPanelChildren<T = any>(
  * @param ResizeHandleType - The ResizeHandle component type
  * @returns Array of Panel and ResizeHandle elements in order
  */
-export function flattenPanelChildren(children: ReactNode, PanelType: any, ResizeHandleType: any): ReactElement[] {
+export function flattenPanelChildren(
+  children: ReactNode,
+  // biome-ignore lint/suspicious/noExplicitAny: Component types can be any React component including forwardRef
+  PanelType: any,
+  // biome-ignore lint/suspicious/noExplicitAny: Component types can be any React component including forwardRef
+  ResizeHandleType: any
+): ReactElement[] {
   const result: ReactElement[] = [];
 
   function traverse(node: ReactNode) {
@@ -71,8 +79,8 @@ export function flattenPanelChildren(children: ReactNode, PanelType: any, Resize
         result.push(child);
       } else {
         // Not a Panel or Handle - recursively search its children
-        const props = child.props as any;
-        if (props && props.children) {
+        const props = child.props as { children?: ReactNode };
+        if (props?.children) {
           traverse(props.children);
         }
       }

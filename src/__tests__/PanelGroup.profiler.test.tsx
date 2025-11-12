@@ -183,9 +183,9 @@ describe('PanelGroup Performance Profiling', () => {
     const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
 
     // Perform resize drag
-    fireEvent.mouseDown(handle, { clientX: 500 });
-    fireEvent.mouseMove(document, { clientX: 600 });
-    fireEvent.mouseUp(document);
+    fireEvent.pointerDown(handle, { clientX: 500 });
+    fireEvent.pointerMove(document, { clientX: 600 });
+    fireEvent.pointerUp(document);
 
     await waitFor(() => {
       expect(renderTimes.length).toBeGreaterThan(0);
@@ -267,6 +267,7 @@ describe('PanelGroup Performance Profiling', () => {
         <div style={{ width: '1000px', height: '600px' }}>
           <PanelGroup direction="horizontal">
             {Array.from({ length: 10 }, (_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: Static array for testing, order never changes
               <div key={i}>
                 <Panel defaultSize="10%">Panel {i + 1}</Panel>
               </div>
@@ -365,10 +366,10 @@ describe('PanelGroup Performance Profiling', () => {
     const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
 
     // Single drag operation
-    fireEvent.mouseDown(handle, { clientX: 500 });
-    fireEvent.mouseMove(document, { clientX: 550 });
-    fireEvent.mouseMove(document, { clientX: 600 });
-    fireEvent.mouseUp(document);
+    fireEvent.pointerDown(handle, { clientX: 500 });
+    fireEvent.pointerMove(document, { clientX: 550 });
+    fireEvent.pointerMove(document, { clientX: 600 });
+    fireEvent.pointerUp(document);
 
     await waitFor(() => {
       const panels = container.querySelectorAll('[data-panel="true"]');

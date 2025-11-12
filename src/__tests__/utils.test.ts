@@ -562,9 +562,7 @@ describe('utils', () => {
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining('[react-adjustable-panels] Size value "100" is missing a unit')
       );
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Automatically treating it as "100px"')
-      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Automatically treating it as "100px"'));
     });
 
     it('does not warn in production mode for plain numbers', () => {

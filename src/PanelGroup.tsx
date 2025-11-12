@@ -465,6 +465,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
 
   // Apply collapse logic to proposed sizes for the panels being resized
   const applyCollapseLogic = useCallback(
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Collapse logic requires checking multiple conditions
     (proposedPixelSizes: number[], containerSize: number, leftIndex: number, rightIndex: number): number[] => {
       // Performance optimization: Early exit if neither panel has collapse support
       const hasCollapsiblePanels =
@@ -703,7 +704,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
 
       onResizeStart(resizeInfo);
     }
-  }, [onResizeStart, direction, createSizeInfo, panelSizes]);
+  }, [onResizeStart, direction, createSizeInfo]);
 
   const handleResizeEnd = useCallback(() => {
     isDraggingRef.current = false;
@@ -839,6 +840,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
   }
 
   return (
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-orientation is valid for role=group per ARIA spec
     <div
       ref={containerRef}
       className={className}

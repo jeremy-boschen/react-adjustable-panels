@@ -115,8 +115,10 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-content">
-          <h1>@jeremy-boschen/react-adjustable-panels</h1>
-          <p className="subtitle">Interactive Demo - A lightweight React panel library</p>
+          <div>
+            <h3>@jeremy-boschen/react-adjustable-panels</h3>
+            <p className="subtitle">Interactive Demo - A lightweight React panel library</p>
+          </div>
           <div className="header-links">
             <a
               href="https://github.com/jeremy-boschen/react-adjustable-panels"

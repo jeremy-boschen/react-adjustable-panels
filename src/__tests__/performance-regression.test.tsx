@@ -52,6 +52,7 @@ describe('Performance Regression Tests', () => {
           <div style={{ width: '1000px', height: '600px' }}>
             <PanelGroup direction="horizontal">
               {Array.from({ length: 10 }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Static test array, order never changes
                 <Panel key={i} defaultSize="10%">
                   Panel {i + 1}
                 </Panel>
@@ -94,9 +95,9 @@ describe('Performance Regression Tests', () => {
       const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
 
       // Single resize operation
-      fireEvent.mouseDown(handle, { clientX: 500 });
-      fireEvent.mouseMove(document, { clientX: 600 });
-      fireEvent.mouseUp(document);
+      fireEvent.pointerDown(handle, { clientX: 500 });
+      fireEvent.pointerMove(document, { clientX: 600 });
+      fireEvent.pointerUp(document);
 
       // Get the slowest update
       const maxUpdateTime = Math.max(...updateTimes);
@@ -121,6 +122,7 @@ describe('Performance Regression Tests', () => {
           <div style={{ width: '1000px', height: '600px' }}>
             <PanelGroup direction="horizontal">
               {Array.from({ length: 10 }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Static test array, order never changes
                 <Panel key={i} defaultSize="10%">
                   Panel {i + 1}
                 </Panel>
@@ -132,9 +134,9 @@ describe('Performance Regression Tests', () => {
 
       const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
 
-      fireEvent.mouseDown(handle, { clientX: 100 });
-      fireEvent.mouseMove(document, { clientX: 150 });
-      fireEvent.mouseUp(document);
+      fireEvent.pointerDown(handle, { clientX: 100 });
+      fireEvent.pointerMove(document, { clientX: 150 });
+      fireEvent.pointerUp(document);
 
       const maxUpdateTime = Math.max(...updateTimes);
 
@@ -147,11 +149,11 @@ describe('Performance Regression Tests', () => {
 
   describe('Critical Path: Re-render Optimization', () => {
     it('BASELINE: memoization prevents unnecessary traversal', async () => {
-      let renderCount = 0;
+      let _renderCount = 0;
       const renderTimes: number[] = [];
 
       const onRender: ProfilerOnRenderCallback = (_id, _phase, actualDuration) => {
-        renderCount++;
+        _renderCount++;
         renderTimes.push(actualDuration);
       };
 
@@ -222,6 +224,7 @@ describe('Performance Regression Tests', () => {
 
   describe('Memory Performance', () => {
     it('BASELINE: does not leak memory on unmount', () => {
+      // biome-ignore lint/suspicious/noExplicitAny: Browser memory API is not typed in standard lib
       const initialMemory = (performance as any).memory?.usedJSHeapSize;
 
       // Render and unmount multiple times
@@ -237,6 +240,7 @@ describe('Performance Regression Tests', () => {
         unmount();
       }
 
+      // biome-ignore lint/suspicious/noExplicitAny: Browser memory API is not typed in standard lib
       const finalMemory = (performance as any).memory?.usedJSHeapSize;
 
       if (initialMemory && finalMemory) {
@@ -269,6 +273,7 @@ describe('Performance Regression Tests', () => {
             <div style={{ width: '1000px', height: '600px' }}>
               <PanelGroup direction="horizontal">
                 {Array.from({ length: panelCount }, (_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: Static test array, order never changes
                   <Panel key={i} defaultSize={`${100 / panelCount}%`}>
                     Panel {i + 1}
                   </Panel>
