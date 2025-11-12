@@ -346,7 +346,7 @@ describe('PanelGroup Integration Tests', () => {
     });
 
     it('allows onResize to override sizes via return value', async () => {
-      const onResize = vi.fn((info: ResizeInfo): PanelSizeInfo[] | undefined => {
+      const onResize = vi.fn((_info: ResizeInfo): PanelSizeInfo[] | undefined => {
         // Return new sizes with first panel set to exactly 300px
         return [
           { size: '300px', pixels: 300, percent: 30 },
@@ -2030,7 +2030,7 @@ describe('PanelGroup Integration Tests', () => {
     });
 
     it('uses return value to override proposed sizes', async () => {
-      const onResize = vi.fn((info: ResizeInfo): PanelSizeInfo[] | undefined => {
+      const onResize = vi.fn((_info: ResizeInfo): PanelSizeInfo[] | undefined => {
         // Return new sizes to override proposed sizes
         return [
           { size: '300px', pixels: 300, percent: 30 },
@@ -2135,7 +2135,7 @@ describe('PanelGroup Integration Tests', () => {
     });
 
     it('onResizeEnd uses return value to override final sizes', async () => {
-      const onResizeEnd = vi.fn((info: ResizeInfo): PanelSizeInfo[] | undefined => {
+      const onResizeEnd = vi.fn((_info: ResizeInfo): PanelSizeInfo[] | undefined => {
         // Return new sizes to override final sizes
         return [
           { size: '350px', pixels: 350, percent: 35 },
