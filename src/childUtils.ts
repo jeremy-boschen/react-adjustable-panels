@@ -1,4 +1,4 @@
-import { Children, type ComponentType, isValidElement, type ReactElement, type ReactNode } from 'react';
+import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 
 /**
  * Recursively finds all Panel children (excluding ResizeHandles).
@@ -10,8 +10,10 @@ import { Children, type ComponentType, isValidElement, type ReactElement, type R
  */
 export function findPanelChildren<T = unknown>(
   children: ReactNode,
-  PanelType: ComponentType<unknown>,
-  ResizeHandleType: ComponentType<unknown>
+  // biome-ignore lint/suspicious/noExplicitAny: Component types can be any React component including forwardRef
+  PanelType: any,
+  // biome-ignore lint/suspicious/noExplicitAny: Component types can be any React component including forwardRef
+  ResizeHandleType: any
 ): ReactElement<T>[] {
   const result: ReactElement<T>[] = [];
 
@@ -57,8 +59,10 @@ export function findPanelChildren<T = unknown>(
  */
 export function flattenPanelChildren(
   children: ReactNode,
-  PanelType: ComponentType<unknown>,
-  ResizeHandleType: ComponentType<unknown>
+  // biome-ignore lint/suspicious/noExplicitAny: Component types can be any React component including forwardRef
+  PanelType: any,
+  // biome-ignore lint/suspicious/noExplicitAny: Component types can be any React component including forwardRef
+  ResizeHandleType: any
 ): ReactElement[] {
   const result: ReactElement[] = [];
 

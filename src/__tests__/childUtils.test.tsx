@@ -92,9 +92,9 @@ describe('childUtils', () => {
       const panels = findPanelChildren(children, Panel, ResizeHandle);
 
       expect(panels).toHaveLength(3);
-      expect(panels[0].props.defaultSize).toBe('100px');
-      expect(panels[1].props.defaultSize).toBe('200px');
-      expect(panels[2].props.defaultSize).toBe('300px');
+      expect((panels[0].props as PanelProps).defaultSize).toBe('100px');
+      expect((panels[1].props as PanelProps).defaultSize).toBe('200px');
+      expect((panels[2].props as PanelProps).defaultSize).toBe('300px');
     });
   });
 
