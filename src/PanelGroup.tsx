@@ -10,12 +10,12 @@ import {
   useMemo,
   useRef,
   useState,
+  useLayoutEffect
 } from 'react';
 import { findPanelChildren, flattenPanelChildren } from './childUtils';
 import { Panel } from './Panel';
 import { normalizePanelGroupProps, normalizePanelProps } from './propNormalization';
 import { ResizeHandle, type ResizeHandleProps } from './ResizeHandle';
-import { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect';
 import type { PanelGroupHandle, PanelGroupProps, PanelProps, PanelSize, PanelSizeInfo, ResizeInfo } from './types';
 import {
   calculateSizes,
@@ -188,7 +188,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
   // Calculate pixel sizes whenever panel sizes or container changes
   // Use useIsomorphicLayoutEffect to ensure synchronous DOM measurements before paint in browser
   // while avoiding SSR/test environment issues
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     if (!containerRef.current || panelSizes.length === 0) return;
 
     const updateSizes = () => {
