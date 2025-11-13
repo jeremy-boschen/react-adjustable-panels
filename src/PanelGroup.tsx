@@ -494,8 +494,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
   // Helper to create PanelSizeInfo from pixel sizes
   const createSizeInfo = useCallback((pixelSizes: number[], containerSize: number): PanelSizeInfo[] => {
     return pixelSizes.map((pixels, i) => {
-      // Get unit from consolidated panel data, with defensive fallback
-      const unit = panelDataRef.current[i]?.unit || 'auto';
+      const unit = panelDataRef.current[i].unit;
       const percent = (pixels / containerSize) * 100;
       const value = convertFromPixels(pixels, containerSize, unit);
       const size = formatSize(value, unit);
@@ -779,9 +778,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
 
     // Update consolidated panel data with final sizes
     for (let i = 0; i < finalPixelSizes.length; i++) {
-      if (panelDataRef.current[i]) {
-        panelDataRef.current[i].current = finalPixelSizes[i];
-      }
+      panelDataRef.current[i].current = finalPixelSizes[i];
     }
 
     setPixelSizes(finalPixelSizes);
@@ -789,8 +786,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
     // Convert final pixel sizes back to panel sizes to maintain proportions when container resizes
     // This prevents panels from reverting to original sizes in nested layouts
     const newPanelSizes = finalPixelSizes.map((pixels, i) => {
-      // Get unit from consolidated panel data, with defensive fallback
-      const unit = panelDataRef.current[i]?.unit || 'auto';
+      const unit = panelDataRef.current[i].unit;
       const value = convertFromPixels(pixels, containerSize, unit);
       return formatSize(value, unit);
     });
