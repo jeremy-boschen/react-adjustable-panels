@@ -345,12 +345,13 @@ describe('PanelGroup Integration Tests', () => {
       fireEvent.pointerUp(document);
     });
 
-    it('allows onResize to mutate sizes in place', async () => {
-      const onResize = vi.fn((info: ResizeInfo): PanelSizeInfo[] | undefined => {
-        // Mutate first panel to be exactly 300px
-        info.currentSizes[0].pixels = 300;
-        // Don't return anything - mutation should be detected
-        return undefined;
+    it('allows onResize to override sizes via return value', async () => {
+      const onResize = vi.fn((_info: ResizeInfo): PanelSizeInfo[] | undefined => {
+        // Return new sizes with first panel set to exactly 300px
+        return [
+          { size: '300px', pixels: 300, percent: 30 },
+          { size: '700px', pixels: 700, percent: 70 },
+        ];
       });
 
       const { container } = render(
@@ -380,7 +381,7 @@ describe('PanelGroup Integration Tests', () => {
         const panel1 = screen.getByTestId('panel-1').parentElement;
         const width1 = parseFloat(panel1?.style.width || '0');
 
-        // Should be forced to 300px by mutation
+        // Should be forced to 300px by return value
         expect(width1).toBeCloseTo(300, 0);
       });
 
@@ -2028,13 +2029,13 @@ describe('PanelGroup Integration Tests', () => {
       });
     });
 
-    it('detects when callback mutates currentSizes array', async () => {
-      const onResize = vi.fn((info: ResizeInfo): PanelSizeInfo[] | undefined => {
-        // Mutate currentSizes to force panel 1 to 300px
-        info.currentSizes[0].pixels = 300;
-        info.currentSizes[1].pixels = 700;
-        // Return undefined to signal mutation
-        return undefined;
+    it('uses return value to override proposed sizes', async () => {
+      const onResize = vi.fn((_info: ResizeInfo): PanelSizeInfo[] | undefined => {
+        // Return new sizes to override proposed sizes
+        return [
+          { size: '300px', pixels: 300, percent: 30 },
+          { size: '700px', pixels: 700, percent: 70 },
+        ];
       });
 
       const { container } = render(
@@ -2074,7 +2075,7 @@ describe('PanelGroup Integration Tests', () => {
         const width1 = parseFloat(panel1?.style.width || '0');
         const width2 = parseFloat(panel2?.style.width || '0');
 
-        // Should detect mutation and use mutated values (300px and 700px)
+        // Should use returned values (300px and 700px)
         expect(width1).toBeCloseTo(300, 0);
         expect(width2).toBeCloseTo(700, 0);
       });
@@ -2133,13 +2134,13 @@ describe('PanelGroup Integration Tests', () => {
       });
     });
 
-    it('onResizeEnd detects when callback mutates currentSizes array', async () => {
-      const onResizeEnd = vi.fn((info: ResizeInfo): PanelSizeInfo[] | undefined => {
-        // Mutate currentSizes to force panel 1 to 350px
-        info.currentSizes[0].pixels = 350;
-        info.currentSizes[1].pixels = 650;
-        // Return undefined to signal mutation
-        return undefined;
+    it('onResizeEnd uses return value to override final sizes', async () => {
+      const onResizeEnd = vi.fn((_info: ResizeInfo): PanelSizeInfo[] | undefined => {
+        // Return new sizes to override final sizes
+        return [
+          { size: '350px', pixels: 350, percent: 35 },
+          { size: '650px', pixels: 650, percent: 65 },
+        ];
       });
 
       const { container } = render(
@@ -2177,7 +2178,7 @@ describe('PanelGroup Integration Tests', () => {
         const width1 = parseFloat(panel1?.style.width || '0');
         const width2 = parseFloat(panel2?.style.width || '0');
 
-        // Should detect mutation and use mutated values (350px and 650px)
+        // Should use returned values (350px and 650px)
         expect(width1).toBeCloseTo(350, 0);
         expect(width2).toBeCloseTo(650, 0);
       });
@@ -2964,6 +2965,174 @@ describe('PanelGroup Integration Tests', () => {
       expect(panel1?.style.width).toMatch(/^\d+(\.\d+)?px$/);
       expect(panel2?.style.width).toMatch(/^\d+(\.\d+)?px$/);
       expect(panel3?.style.width).toMatch(/^\d+(\.\d+)?px$/);
+    });
+  });
+
+  describe('Branch Coverage Tests', () => {
+    it('setSizes: panel stays collapsed when size is at or below minSize', async () => {
+      const onCollapse = vi.fn();
+
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.setSizes(['150px', '850px'])} data-testid="set-sizes-btn">
+              Set Sizes
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px" defaultCollapsed onCollapse={onCollapse}>
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(parseFloat(panel1?.style.width || '0')).toBeCloseTo(50, 0);
+      });
+
+      // Panel starts collapsed. Call setSizes with a size <= minSize
+      // This should keep it collapsed (no transition)
+      const setSizesBtn = screen.getByTestId('set-sizes-btn');
+      fireEvent.click(setSizesBtn);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        // Should still be collapsed at collapsedSize
+        expect(parseFloat(panel1?.style.width || '0')).toBeCloseTo(50, 0);
+      });
+
+      // onCollapse should have been called once on mount, but not again (no transition)
+      expect(onCollapse).toHaveBeenCalledTimes(1);
+      expect(onCollapse).toHaveBeenCalledWith(true);
+    });
+
+    it('setSizes: panel stays expanded when size is at or above minSize', async () => {
+      const onCollapse = vi.fn();
+
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => groupRef.current?.setSizes(['300px', '700px'])} data-testid="set-sizes-btn">
+              Set Sizes
+            </button>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="400px" minSize="200px" collapsedSize="50px" onCollapse={onCollapse}>
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="600px">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(parseFloat(panel1?.style.width || '0')).toBeCloseTo(400, 0);
+      });
+
+      // Panel starts expanded. Call setSizes with a size >= minSize
+      // This should keep it expanded (no transition)
+      const setSizesBtn = screen.getByTestId('set-sizes-btn');
+      fireEvent.click(setSizesBtn);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        // Should be at the new size (still expanded)
+        expect(parseFloat(panel1?.style.width || '0')).toBeCloseTo(300, 0);
+      });
+
+      // onCollapse should never be called (no transition)
+      expect(onCollapse).not.toHaveBeenCalled();
+    });
+
+    it('isCollapsed returns false for out-of-bounds index', async () => {
+      function TestComponent() {
+        const groupRef = useRef<PanelGroupHandle>(null);
+        const [result, setResult] = useState<boolean | undefined>(undefined);
+
+        return (
+          <div style={{ width: '1000px', height: '600px' }}>
+            <button onClick={() => setResult(groupRef.current?.isCollapsed(999))} data-testid="check-btn">
+              Check
+            </button>
+            <div data-testid="result">{String(result)}</div>
+            <PanelGroup ref={groupRef} direction="horizontal">
+              <Panel defaultSize="50%">
+                <div data-testid="panel-1">Panel 1</div>
+              </Panel>
+              <Panel defaultSize="50%">
+                <div data-testid="panel-2">Panel 2</div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        );
+      }
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1?.style.width).toBeTruthy();
+      });
+
+      // Query an index that doesn't exist
+      const checkBtn = screen.getByTestId('check-btn');
+      fireEvent.click(checkBtn);
+
+      await waitFor(() => {
+        const resultDiv = screen.getByTestId('result');
+        expect(resultDiv.textContent).toBe('false');
+      });
+    });
+
+    it('handles drag with right panel having collapsedSize', async () => {
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            <Panel defaultSize="400px" minSize="200px" collapsedSize="50px">
+              <div data-testid="panel-1">Panel 1</div>
+            </Panel>
+            <Panel defaultSize="600px" minSize="300px" collapsedSize="100px">
+              <div data-testid="panel-2">Panel 2</div>
+            </Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        expect(panel1?.style.width).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+      expect(handle).toBeTruthy();
+
+      // Drag right (expand left, shrink right toward its collapsedSize)
+      fireEvent.pointerDown(handle, { clientX: 400, clientY: 300 });
+      fireEvent.pointerMove(document, { clientX: 600, clientY: 300 });
+      fireEvent.pointerUp(document);
+
+      await waitFor(() => {
+        const panel1 = screen.getByTestId('panel-1').parentElement;
+        const width1 = parseFloat(panel1?.style.width || '0');
+        // Panel 1 should have expanded
+        expect(width1).toBeGreaterThan(400);
+      });
     });
   });
 });

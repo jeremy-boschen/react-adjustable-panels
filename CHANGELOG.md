@@ -7,6 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **CRITICAL:** Fixed DOM measurement timing by replacing `useEffect` with `useLayoutEffect` for synchronous measurements
+  - Prevents FOUC (Flash of Unstyled Content) and race conditions
+  - Ensures measurements happen before paint for correct initial layout
+  - Added `useIsomorphicLayoutEffect` utility for SSR compatibility
+- **CRITICAL:** Fixed constraint cache invalidation bug where dynamic `minSize`/`maxSize` prop changes wouldn't trigger recalculation
+  - Added constraint hash tracking to detect when constraint props change
+  - Prevents stale layout when constraints are updated dynamically
+- **HIGH:** Fixed React 18 concurrent mode compatibility by replacing `setTimeout` with `queueMicrotask` (5 occurrences)
+  - Ensures callbacks execute in microtask queue for predictable timing
+  - Eliminates test flakiness from time-based delays
+  - Better integration with React 18's rendering pipeline
+- **HIGH:** Eliminated ref array synchronization bugs by consolidating 8 separate ref arrays into single `panelDataRef` structure
+  - Prevents index-out-of-bounds errors and synchronization issues
+  - Makes it impossible for panel data to get out of sync by design
+  - Improves cache locality and performance
+  - Optimized property names for bundle size (saves ~300-400 bytes)
+- **HIGH:** Fixed initialization race condition where useEffect ran twice before useLayoutEffect
+  - Changed dependency array from `[children, panelSizes.length]` to `[children]`
+  - Prevents preservation of zero values during React 18 concurrent rendering
+- **MEDIUM:** Fixed division-by-zero bug when container has zero size (hidden/display:none elements)
+  - Added guard in `convertToPixels` with helpful console warning
+  - Prevents NaN propagation and render failures
+
+### Changed
+
+- **BREAKING:** Removed mutation detection in resize callbacks - callbacks now use return-only API
+  - Migration: Return new array from callbacks instead of mutating `currentSizes`
+  - Before: `onResize={(info) => { info.currentSizes[0].size = '300px'; }}`
+  - After: `onResize={(info) => [{ size: '300px', pixels: 300, percent: 30 }, ...info.currentSizes.slice(1)]}`
+  - Updated `ResizeInfo` documentation in types.ts to specify return-only behavior
+- **Code quality:** Removed all defensive null/undefined checks that cannot be tested
+  - Follows fail-fast principle: let bugs surface with clear stack traces
+  - Removed ~80 lines of untestable defensive code
+  - If invariants are violated, errors now surface immediately instead of being silently masked
+
+### Performance
+
+- Eliminated 2 array clones per drag event by removing mutation detection (significant GC pressure reduction)
+- Optimized constraint hash calculation by replacing `JSON.stringify` with string concatenation
+  - Format: `"minSize:maxSize|minSize:maxSize|..."` for faster, more memory-efficient hashing
+  - Only hashes values that matter (minSize and maxSize)
+- Optimized PanelData property names for smaller bundle size
+  - Shortened property names (e.g., `currentPixelSize` → `current`)
+  - Saves ~300-400 bytes in minified bundle
+
+### Internal
+
+- **Refactored ref management:** Consolidated 8 separate ref arrays into single `PanelData[]` structure
+  - **Before:** Separate refs for `currentPixelSizes`, `dragStartPixelSizes`, `previousPixelSizes`, `constraints`, `originalUnits`, `collapsedSize`, `collapsedState`, `collapseCallbacks`
+  - **After:** Single `panelDataRef` with structured `PanelData` objects containing all panel-related state
+  - **Benefits:**
+    - Eliminates synchronization bugs by design (impossible for arrays to have different lengths)
+    - Automatic bounds checking (single array length to validate)
+    - Better cache locality (related data stored together)
+    - More maintainable and easier to reason about
+  - **Implementation notes:**
+    - Preserved pixel sizes when props change to maintain state continuity
+    - Updated all 30+ ref access locations throughout PanelGroup.tsx
+    - Added comprehensive inline documentation explaining the consolidation
+
+### Documentation
+
+- Added comprehensive correctness-first analysis document (`docs/correctness-and-bugs-analysis.md`)
+  - Identified and documented 14 potential issues across correctness, bugs, maintainability, and performance
+  - Detailed reproduction scenarios and fixes for each issue
+  - Priority order: Correctness → Bugs → Maintainability → Performance
+  - 86% completion rate for critical/high/medium priority bugs (6 of 7 fixed)
+
+### Tests
+
+- Updated 3 tests to verify return-based callback API instead of mutation detection
+- Added 4 branch coverage tests to cover previously uncovered code paths:
+  - setSizes: panel stays collapsed when size <= minSize (no transition)
+  - setSizes: panel stays expanded when size >= minSize (no transition)
+  - isCollapsed: out-of-bounds index fallback
+  - handleResize: right panel with collapsedSize
+- Improved branch coverage from 86.54% to 93.84% (exceeds 90% requirement)
+- All tests pass: 173 passing (4 new tests added)
+
 ## [0.3.1] - 2025-11-12
 
 ## [0.3.0] - 2025-11-11

@@ -13,8 +13,8 @@ const { gzipSync } = require('zlib');
 
 // Performance budgets (in KB)
 const BUDGETS = {
-  raw: 25, // 25KB raw (currently ~18.8KB)
-  gzip: 8, // 8KB gzipped (currently ~6.1KB)
+  raw: 25, // 25KB raw (currently ~19.8KB after ref consolidation refactor)
+  gzip: 8, // 8KB gzipped (currently ~6.4KB after ref consolidation refactor)
 };
 
 const BUNDLE_PATH = path.join(__dirname, '../dist/index.js');
