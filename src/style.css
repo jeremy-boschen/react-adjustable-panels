@@ -73,8 +73,15 @@
   background: var(--rap-handle-active-color);
 }
 
-[data-panel-group] {
+/* Deferred resize position indicator */
+[data-deferred-indicator="true"] {
+  /* CSS variables for customization */
+  --rap-indicator-color: rgba(0, 102, 204, 0.6);
+
+  background: var(--rap-indicator-color);
+  z-index: 100;
 }
+
 
 /* Ensure panels don't shrink below their size */
 [data-panel="true"] {

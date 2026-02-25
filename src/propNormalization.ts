@@ -54,6 +54,7 @@ export interface NormalizedPanelGroupProps {
   onResize?: PanelGroupProps['onResize'];
   onResizeStart?: PanelGroupProps['onResizeStart'];
   onResizeEnd?: PanelGroupProps['onResizeEnd'];
+  deferredResize: boolean;
 }
 
 /**
@@ -71,6 +72,7 @@ export function normalizePanelGroupProps(props: PanelGroupProps): NormalizedPane
     onResize: props.onResize,
     onResizeStart: props.onResizeStart,
     onResizeEnd: props.onResizeEnd,
+    deferredResize: props.deferredResize ?? false,
   };
 }
 
