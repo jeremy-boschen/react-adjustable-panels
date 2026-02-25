@@ -76,7 +76,7 @@ import {
  */
 export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProps, ref) => {
   // Normalize props at component boundary - provides defaults for optional values
-  const { children, direction, className, style, onResize, onResizeStart, onResizeEnd } = {
+  const { children, direction, className, style, onResize, onResizeStart, onResizeEnd, deferredResize } = {
     children: rawProps.children,
     ...normalizePanelGroupProps(rawProps),
   };
@@ -86,6 +86,10 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
   const [pixelSizes, setPixelSizes] = useState<number[]>([]);
   const isDraggingRef = useRef(false);
   const isInitializedRef = useRef(false);
+
+  // Deferred resize: store proposed sizes and show indicator until pointer release
+  const [deferredIndicatorOffset, setDeferredIndicatorOffset] = useState<number | null>(null);
+  const deferredDragRef = useRef<{ proposedPixelSizes: number[]; handleIndex: number } | null>(null);
 
   /**
    * Consolidated panel data structure - eliminates synchronization bugs
@@ -667,6 +671,15 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
       proposedPixelSizes[leftIndex] = newLeft;
       proposedPixelSizes[rightIndex] = newRight;
 
+      // In deferred mode, store proposed sizes and show indicator without applying yet
+      if (deferredResize) {
+        deferredDragRef.current = { proposedPixelSizes: [...proposedPixelSizes], handleIndex };
+        // Indicator offset = sum of panels to the left of (and including) the left panel
+        const offset = proposedPixelSizes.slice(0, leftIndex + 1).reduce((a, b) => a + b, 0);
+        setDeferredIndicatorOffset(Number.isFinite(offset) ? offset : 0);
+        return;
+      }
+
       // Apply collapse logic (snaps to collapsedSize/minSize based on thresholds)
       proposedPixelSizes = applyCollapseLogic(proposedPixelSizes, containerSize, leftIndex, rightIndex);
 
@@ -707,7 +720,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
       // This prevents the useEffect from recalculating and causing jumps
       setPixelSizes(finalPixelSizes);
     },
-    [direction, onResize, createSizeInfo, applySizeInfo, applyCollapseLogic]
+    [direction, onResize, createSizeInfo, applySizeInfo, applyCollapseLogic, deferredResize]
   );
 
   const handleResizeStart = useCallback(() => {
@@ -750,6 +763,22 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
     const rect = containerRef.current!.getBoundingClientRect();
     const containerSize = direction === 'horizontal' ? rect.width : rect.height;
 
+    // In deferred mode, apply the stored proposed sizes now that drag is complete
+    if (deferredResize) {
+      setDeferredIndicatorOffset(null);
+      if (deferredDragRef.current === null) {
+        return; // No drag movement happened (just a click), nothing to apply
+      }
+      const { proposedPixelSizes, handleIndex } = deferredDragRef.current;
+      deferredDragRef.current = null;
+      // Apply collapse logic to the deferred proposed sizes
+      const deferredSizes = applyCollapseLogic([...proposedPixelSizes], containerSize, handleIndex, handleIndex + 1);
+      // Update panel data so the rest of the function uses the deferred sizes
+      for (let i = 0; i < deferredSizes.length; i++) {
+        panelDataRef.current[i].current = deferredSizes[i];
+      }
+    }
+
     let finalPixelSizes = panelDataRef.current.map(d => d.current);
 
     // Call onResizeEnd with full info - it can override final sizes
@@ -791,7 +820,7 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
       return formatSize(value, unit);
     });
     setPanelSizes(newPanelSizes);
-  }, [direction, onResizeEnd, createSizeInfo, applySizeInfo]);
+  }, [direction, onResizeEnd, createSizeInfo, applySizeInfo, deferredResize, applyCollapseLogic]);
 
   const flexDirection = direction === 'horizontal' ? 'row' : 'column';
 
@@ -880,11 +909,26 @@ export const PanelGroup = forwardRef<PanelGroupHandle, PanelGroupProps>((rawProp
         width: '100%',
         height: '100%',
         overflow: 'hidden',
+        ...(deferredResize && { position: 'relative' }),
         ...style,
       }}
       data-panel-group={direction}
     >
       {processedChildren}
+      {deferredResize && deferredIndicatorOffset !== null && (
+        <div
+          aria-hidden="true"
+          data-deferred-indicator="true"
+          data-direction={direction}
+          style={{
+            position: 'absolute',
+            pointerEvents: 'none',
+            ...(direction === 'horizontal'
+              ? { left: deferredIndicatorOffset, top: 0, width: 2, height: '100%' }
+              : { top: deferredIndicatorOffset, left: 0, height: 2, width: '100%' }),
+          }}
+        />
+      )}
     </div>
   );
 });

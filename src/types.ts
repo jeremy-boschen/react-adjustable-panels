@@ -105,6 +105,14 @@ export interface PanelGroupProps {
    * or mutate info.currentSizes directly.
    */
   onResizeEnd?: (info: ResizeInfo) => PanelSizeInfo[] | undefined;
+  /**
+   * When true, panels are only resized when the drag is released (pointer up).
+   * During drag, a visual indicator shows the proposed resize position without
+   * updating the panels in real-time. Useful for layouts with expensive-to-render
+   * components (e.g., complex charts, tables) where live resizing causes poor performance.
+   * Default: false
+   */
+  deferredResize?: boolean;
 }
 
 /**

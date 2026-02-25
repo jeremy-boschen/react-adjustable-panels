@@ -3135,4 +3135,225 @@ describe('PanelGroup Integration Tests', () => {
       });
     });
   });
+
+  describe('Deferred Resize', () => {
+    it('does not resize panels during drag when deferredResize is true', async () => {
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal" deferredResize>
+            <Panel defaultSize="50%">
+              <div data-testid="panel-1">Panel 1</div>
+            </Panel>
+            <Panel defaultSize="50%">
+              <div data-testid="panel-2">Panel 2</div>
+            </Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handle = container.querySelector('[data-resize-handle="true"]');
+        expect(handle).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+      const panel1 = screen.getByTestId('panel-1').parentElement;
+      const initialWidth = parseFloat(panel1?.style.width || '0');
+
+      // Start drag and move - panels should NOT resize yet
+      fireEvent.pointerDown(handle, { clientX: 500, clientY: 300 });
+      fireEvent.pointerMove(document, { clientX: 600, clientY: 300 });
+
+      // Width should remain unchanged during drag
+      const widthDuringDrag = parseFloat(panel1?.style.width || '0');
+      expect(widthDuringDrag).toBeCloseTo(initialWidth, 0);
+
+      // End drag - now panels should resize
+      fireEvent.pointerUp(document);
+    });
+
+    it('shows deferred indicator during drag when deferredResize is true', async () => {
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal" deferredResize>
+            <Panel defaultSize="50%">Panel 1</Panel>
+            <Panel defaultSize="50%">Panel 2</Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handle = container.querySelector('[data-resize-handle="true"]');
+        expect(handle).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+
+      // No indicator before drag
+      expect(container.querySelector('[data-deferred-indicator="true"]')).toBeNull();
+
+      // Start drag and move
+      fireEvent.pointerDown(handle, { clientX: 500, clientY: 300 });
+      fireEvent.pointerMove(document, { clientX: 600, clientY: 300 });
+
+      // Indicator should appear during drag
+      expect(container.querySelector('[data-deferred-indicator="true"]')).toBeTruthy();
+
+      // End drag - indicator should disappear
+      fireEvent.pointerUp(document);
+      expect(container.querySelector('[data-deferred-indicator="true"]')).toBeNull();
+    });
+
+    it('does not show indicator when deferredResize is false', async () => {
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal">
+            <Panel defaultSize="50%">Panel 1</Panel>
+            <Panel defaultSize="50%">Panel 2</Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handle = container.querySelector('[data-resize-handle="true"]');
+        expect(handle).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+
+      fireEvent.pointerDown(handle, { clientX: 500, clientY: 300 });
+      fireEvent.pointerMove(document, { clientX: 600, clientY: 300 });
+
+      // No deferred indicator since deferredResize is false
+      expect(container.querySelector('[data-deferred-indicator="true"]')).toBeNull();
+
+      fireEvent.pointerUp(document);
+    });
+
+    it('calls onResizeStart during drag even in deferred mode', async () => {
+      const onResizeStart = vi.fn();
+
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal" deferredResize onResizeStart={onResizeStart}>
+            <Panel defaultSize="50%">Panel 1</Panel>
+            <Panel defaultSize="50%">Panel 2</Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handle = container.querySelector('[data-resize-handle="true"]');
+        expect(handle).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+      fireEvent.pointerDown(handle, { clientX: 500, clientY: 300 });
+
+      expect(onResizeStart).toHaveBeenCalledTimes(1);
+
+      fireEvent.pointerUp(document);
+    });
+
+    it('calls onResizeEnd after drag release in deferred mode', async () => {
+      const onResizeEnd = vi.fn();
+
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal" deferredResize onResizeEnd={onResizeEnd}>
+            <Panel defaultSize="50%">Panel 1</Panel>
+            <Panel defaultSize="50%">Panel 2</Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handle = container.querySelector('[data-resize-handle="true"]');
+        expect(handle).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+      fireEvent.pointerDown(handle, { clientX: 500, clientY: 300 });
+      fireEvent.pointerMove(document, { clientX: 600, clientY: 300 });
+      fireEvent.pointerUp(document);
+
+      expect(onResizeEnd).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not call onResize during drag in deferred mode', async () => {
+      const onResize = vi.fn();
+
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal" deferredResize onResize={onResize}>
+            <Panel defaultSize="50%">Panel 1</Panel>
+            <Panel defaultSize="50%">Panel 2</Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handle = container.querySelector('[data-resize-handle="true"]');
+        expect(handle).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+      fireEvent.pointerDown(handle, { clientX: 500, clientY: 300 });
+      fireEvent.pointerMove(document, { clientX: 600, clientY: 300 });
+
+      expect(onResize).not.toHaveBeenCalled();
+
+      fireEvent.pointerUp(document);
+    });
+
+    it('indicator has correct data-direction attribute', async () => {
+      const { container } = render(
+        <div style={{ width: '600px', height: '1000px' }}>
+          <PanelGroup direction="vertical" deferredResize>
+            <Panel defaultSize="50%">Panel 1</Panel>
+            <Panel defaultSize="50%">Panel 2</Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handle = container.querySelector('[data-resize-handle="true"]');
+        expect(handle).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+      fireEvent.pointerDown(handle, { clientX: 300, clientY: 500 });
+      fireEvent.pointerMove(document, { clientX: 300, clientY: 600 });
+
+      const indicator = container.querySelector('[data-deferred-indicator="true"]');
+      expect(indicator).toBeTruthy();
+      expect(indicator?.getAttribute('data-direction')).toBe('vertical');
+
+      fireEvent.pointerUp(document);
+    });
+
+    it('does not show indicator when pointer is released without moving', async () => {
+      const { container } = render(
+        <div style={{ width: '1000px', height: '600px' }}>
+          <PanelGroup direction="horizontal" deferredResize>
+            <Panel defaultSize="50%">Panel 1</Panel>
+            <Panel defaultSize="50%">Panel 2</Panel>
+          </PanelGroup>
+        </div>
+      );
+
+      await waitFor(() => {
+        const handle = container.querySelector('[data-resize-handle="true"]');
+        expect(handle).toBeTruthy();
+      });
+
+      const handle = container.querySelector('[data-resize-handle="true"]') as HTMLElement;
+
+      // Click without moving
+      fireEvent.pointerDown(handle, { clientX: 500, clientY: 300 });
+      fireEvent.pointerUp(document);
+
+      expect(container.querySelector('[data-deferred-indicator="true"]')).toBeNull();
+    });
+  });
 });

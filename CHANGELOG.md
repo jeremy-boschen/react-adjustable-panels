@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Deferred resize mode**: New `deferredResize` prop on `PanelGroup` that delays applying panel sizes until the drag is released (pointer up). During drag, a visual indicator shows the proposed resize position without re-rendering panels. Useful for layouts with expensive-to-render components (e.g., complex charts, tables) where live resizing causes poor performance.
+  - When `deferredResize={true}`: panels do not resize during drag; a `[data-deferred-indicator]` element shows the proposed handle position
+  - `onResize` is not called during drag in deferred mode; use `onResizeEnd` for final size notifications
+  - The indicator color is customizable via the `--rap-indicator-color` CSS variable
+
 ## [0.3.2] - 2025-11-13
 
 ### Fixed
